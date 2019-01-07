@@ -2,9 +2,9 @@ require_relative '../event_tracer'
 require_relative './basic_decorator'
 require 'json'
 
-# Usage: EventTracer.register :base, EventTracer::Logger.new(Logger.new(STDOUT))
+# Usage: EventTracer.register :base, EventTracer::BaseLogger.new(Logger.new(STDOUT))
 module EventTracer
-  class Logger < BasicDecorator
+  class BaseLogger < BasicDecorator
 
     LOG_TYPES.each do |log_type|
       define_method log_type do |*args|

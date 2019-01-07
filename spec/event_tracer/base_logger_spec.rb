@@ -1,10 +1,10 @@
 require 'spec_helper'
 
-describe EventTracer::Logger do
+describe EventTracer::BaseLogger do
 
   let(:mock_logger) { MockLogger.new }
 
-  subject { EventTracer::Logger.new(mock_logger) }
+  subject { EventTracer::BaseLogger.new(mock_logger) }
 
   shared_examples_for 'send_simple_message' do
     it 'sends formatted simple message' do

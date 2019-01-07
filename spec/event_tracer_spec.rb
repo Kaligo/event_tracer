@@ -1,6 +1,6 @@
 describe EventTracer do
 
-  let(:tracer_logger) { EventTracer::Logger.new(MockLogger.new) }
+  let(:tracer_logger) { EventTracer::BaseLogger.new(MockLogger.new) }
   let(:tracer_appsignal) { EventTracer::AppsignalLogger.new(MockAppsignal.new) }
 
   let(:loggers_args) { nil }
