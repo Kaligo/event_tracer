@@ -9,6 +9,7 @@ module EventTracer
     LOG_TYPES.each do |log_type|
       define_method log_type do |*args|
         send_message(log_type, *args)
+        LogResult.new(true)
       end
     end
 
@@ -17,11 +18,9 @@ module EventTracer
       attr_reader :logger, :decoratee
       alias_method :logger, :decoratee
 
-      # execute only if there's a message to be logged
-      def send_message(log_method, action: nil, simple_message: nil, **args)
-        return false unless simple_message || args[:message]
-        message_to_send = simple_message ? simple_message : args.to_json
-        logger.send(log_method, "[#{action}] #{message_to_send}")
+      # EventTracer ensures action & message is always populated
+      def send_message(log_method, action:, message:, **args)
+        logger.send(log_method, "[#{action}] #{message} #{args.to_json}")
       end
 
   end

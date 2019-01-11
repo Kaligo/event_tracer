@@ -14,11 +14,16 @@ module EventTracer
 
     LOG_TYPES.each do |log_type|
       define_method log_type do |**args|
-        SUPPORTED_METRICS.each do |metric|
-          next unless args[:appsignal] && args[:appsignal][metric].is_a?(Hash)
-          send_metric(metric, args[:appsignal][metric]) unless args[:appsignal][metric].empty?
+        return LogResult.new(false, "Invalid appsignal config") unless args[:appsignal] && args[:appsignal].is_a?(Hash)
+
+        applied_metrics(args[:appsignal]).each do |metric|
+          metric_args = args[:appsignal][metric]
+          return LogResult.new(false, "Appsignal metric #{metric} invalid") unless metric_args && metric_args.is_a?(Hash) 
+
+          send_metric metric, metric_args
         end
-        true
+
+        LogResult.new(true)
       end
     end
 
@@ -26,6 +31,10 @@ module EventTracer
 
       attr_reader :appsignal, :decoratee
       alias_method :appsignal, :decoratee
+
+      def applied_metrics(appsignal_args)
+        appsignal_args.keys.select { |metric| SUPPORTED_METRICS.include?(metric) }
+      end
 
       def send_metric(metric, payload)
         payload.each do |increment, value|

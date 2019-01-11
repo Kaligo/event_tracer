@@ -6,9 +6,9 @@ This gem currently supports only:
 
 1. Base logger (payload in JSON format): Can be initialised around the default loggers like thos of Rails or Hanami
 2. Appsignal: Empty wrapper around the custom metric distributions
-  1. increment_counter
-  2. add_distribution_value
-  3. set_gauge
+    1. increment_counter
+    2. add_distribution_value
+    3. set_gauge
 
 No dependencies are declared for this as the  
 
@@ -58,21 +58,23 @@ As this is a registry, you can set it up with your own implemented wrapper as lo
 
 You can control the loggers to use when sending the event by using the top-level `loggers` key to specify the logger service(s) to apply to. 
 
-Key | Key type | Values
---------------|----------|-------
-loggers | Array[Symbol] | Array of symbolised logger codes registered for use
+Key | Key type | Required | Values
+----|----------|----------|--------
+loggers | Array[Symbol] | N | Array of symbolised logger codes registered for use
+action | String | Y | Action label to prepend log messages with
+message | String | Y | This is the basic message to be used for all services
 
 This accepts an array of the loggers' codes which will be used to select the loggers to send messages for. Invalid/ empty values will be treated as blank and all loggers will be invoked in such a scenario.
 
 **1. Base Logger**
 
-The base logger only logs values of 2 types. A simple plain text message or a JSON payload
+The base logger only with the following format using a `message`, `action` and all remaining arguments are rendered in a JSON payload
 
-Key | Key type | Values
---------------|----------|-------
-action | String | Action label to prepend the log message with
-simple_message | String | Only a text string will be logged
-message | String | This tells the logger that all keys will be formatted in a JSON payload. Only primitive values may be sent when logging the payload
+```ruby
+# Sample usage
+EventTracer.info action: 'Action', message: 'Message', other_args: 'data'
+=> "[Action] message {\"other_args\":\"data\"}"
+```
 
 **2. Appsignal**
 
@@ -92,6 +94,14 @@ appsignal | increment_counter | Hash | Hash of key-value pairs featuring the met
 | | add_distribution_value | Hash | Hash of key-value pairs featuring the metric name and the distribution value to send
 | | set_gauge | Hash | Hash of key-value pairs featuring the metric name and the gauge value to send
 
+```ruby
+# Sample usage
+EventTracer.info action: 'Action', message: 'Message', appsignal: { increment_counter: { counter_1: 1, counter_2: 2 } }
+# This calls .increment_counter on Appsignal twice with the 2 sets of arguments
+#  counter_1, 1
+#  counter_2, 2
+```
+
 **Summary**
 
 In all the generated interface for `EventTracer` logging could look something like this
@@ -108,6 +118,22 @@ EventTracer.info(
     }
   }
 )
+```
+
+### Results
+
+Logging is a side task that should never fail. So we capture any exceptions so that any issue does not impact the flow of your application.
+
+The `EventTracer` returns a `EventTracer::Result` object that logs the success/ failure of the outcome of your execution in case you'd like to investigate why your services ain't working.
+
+Each log result is mapped to the code of the activated logger
+
+**Sample**
+
+```ruby
+result = EventTracer.info action: '123', message: '' # <EventTracer::Result @records={:base=>#<struct EventTracer::LogResult :success?=true, error=nil>}>
+result.records[:base].success? => true
+result.records[:base].error => nil
 ```
 
 ## Development

@@ -2,53 +2,51 @@ require 'spec_helper'
 
 describe EventTracer::AppsignalLogger do
 
-  let(:metric_payload) { nil }
-  let(:appsignal_payload) { {
-    increment_counter: metric_payload,
-    add_distribution_value: metric_payload,
-    set_gauge: metric_payload
-  } }
+  INVALID_PAYLOADS ||= [
+    nil,
+    [],
+    Object.new,
+    'string',
+    10,
+    :invalid_payload
+  ].freeze
+
+  let(:appsignal_payload) { nil }
   let(:mock_appsignal) { MockAppsignal.new }
 
   subject { EventTracer::AppsignalLogger.new(mock_appsignal) }
 
-  shared_examples_for 'rejects_invalid_metric_payload' do
-    [
-      nil,
-      [],
-      1,
-      "String",
-      Object.new,
-      {}
-    ].each do |invalid_input|
-      context "Invalid metric payload: #{invalid_input}" do
-        let(:metric_payload) { invalid_input }
+  shared_examples_for 'rejects_invalid_appsignal_args' do
+    INVALID_PAYLOADS.each do |appsignal_value|
+      context "Invalid appsignal top-level args" do
+        let(:appsignal_payload) { appsignal_value }
 
-        it 'rejects non-hash input' do
+        it 'rejects the payload when invalid appsignal values are given' do
           expect(mock_appsignal).not_to receive(:increment_counter)
           expect(mock_appsignal).not_to receive(:add_distribution_value)
           expect(mock_appsignal).not_to receive(:set_gauge)
-          subject.send(expected_call, appsignal: appsignal_payload)
+
+          result = subject.send(expected_call, appsignal: appsignal_payload)
+
+          expect(result.success?).to eq false
+          expect(result.error).to eq 'Invalid appsignal config'
         end
       end
     end
   end
 
-  shared_examples_for 'rejects_blank_appsignal_payload' do
-    [
-      nil,
-      {}
-    ].each do |blank_payload|
-      context "Blank appsignal payload #{blank_payload}" do
-        let(:appsignal_payload) { blank_payload }
+  shared_examples_for 'skip_processing_empty_appsignal_args' do
+    let(:appsignal_payload) { {} }
 
-        it 'does not process with no appsignal payload given' do
-          expect(mock_appsignal).not_to receive(:increment_counter)
-          expect(mock_appsignal).not_to receive(:add_distribution_value)
-          expect(mock_appsignal).not_to receive(:set_gauge)
-          subject.send(expected_call, appsignal: appsignal_payload)
-        end
-      end
+    it 'skips any metric processing' do
+      expect(mock_appsignal).not_to receive(:increment_counter)
+      expect(mock_appsignal).not_to receive(:add_distribution_value)
+      expect(mock_appsignal).not_to receive(:set_gauge)
+
+      result = subject.send(expected_call, appsignal: appsignal_payload)
+
+      expect(result.success?).to eq true
+      expect(result.error).to eq nil
     end
   end
 
@@ -65,7 +63,31 @@ describe EventTracer::AppsignalLogger do
       expect(mock_appsignal).to receive(:add_distribution_value).with('Distribution_1', 10)
       expect(mock_appsignal).to receive(:set_gauge).with('Gauge_1', 100)
 
-      subject.send(expected_call, appsignal: appsignal_payload)
+      result = subject.send(expected_call, appsignal: appsignal_payload)
+
+      expect(result.success?).to eq true
+      expect(result.error).to eq nil
+    end
+  end
+
+  shared_examples_for "rejects_invalid_metric_args" do
+    EventTracer::AppsignalLogger::SUPPORTED_METRICS.each do |metric|
+      INVALID_PAYLOADS.each do |payload|
+        context "Invalid metric values for #{metric}: #{payload}" do
+          let(:appsignal_payload) { { metric => payload } }
+
+          it 'rejects the payload when invalid appsignal values are given' do
+            expect(mock_appsignal).not_to receive(:increment_counter)
+            expect(mock_appsignal).not_to receive(:add_distribution_value)
+            expect(mock_appsignal).not_to receive(:set_gauge)
+
+            result = subject.send(expected_call, appsignal: appsignal_payload)
+
+            expect(result.success?).to eq false
+            expect(result.error).to eq "Appsignal metric #{metric} invalid"
+          end
+        end
+      end
     end
   end
 
@@ -73,9 +95,10 @@ describe EventTracer::AppsignalLogger do
     context "Log type: #{log_type}" do
       let(:expected_call) { log_type }
 
-      it_behaves_like 'rejects_invalid_metric_payload'
-      it_behaves_like 'rejects_blank_appsignal_payload'
       it_behaves_like 'processes_hashed_inputs'
+      it_behaves_like 'skip_processing_empty_appsignal_args'
+      it_behaves_like 'rejects_invalid_appsignal_args'
+      it_behaves_like 'rejects_invalid_metric_args'
     end
   end
 
