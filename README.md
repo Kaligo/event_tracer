@@ -1,5 +1,7 @@
 # EventTracer
 
+[![Build Status](https://travis-ci.org/melvrickgoh/event_tracer.svg?branch=master)](https://travis-ci.org/melvrickgoh/event_tracer)
+
 EventTracer is a thin wrapper to aggregate multiple logging services as a single component with a common interface for utilising the different underlying services.
 
 This gem currently supports only: 
