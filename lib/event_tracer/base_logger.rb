@@ -20,7 +20,8 @@ module EventTracer
 
       # EventTracer ensures action & message is always populated
       def send_message(log_method, action:, message:, **args)
-        logger.send(log_method, "[#{action}] #{message} #{args.to_json}")
+        data = { action: action, message: message, args: args }
+        logger.public_send(log_method, data)
       end
 
   end

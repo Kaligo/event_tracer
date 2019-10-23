@@ -7,7 +7,7 @@ describe EventTracer do
   let(:args) { { loggers: loggers_args, action: 'Action', message: 'Message',
     appsignal: { increment_counter: { counter_1: 1 } } } }
 
-  let(:expected_log_message) { '[Action] Message {}' }
+  let(:expected_log_message) { { action: 'Action', message: 'Message', args: {} } }
 
   subject { EventTracer }
 
