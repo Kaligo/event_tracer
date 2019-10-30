@@ -4,10 +4,17 @@ describe EventTracer do
   let(:mock_appsignal) { MockAppsignal.new }
 
   let(:loggers_args) { nil }
-  let(:args) { { loggers: loggers_args, action: 'Action', message: 'Message',
-    appsignal: { increment_counter: { counter_1: 1 } } } }
+  let(:args) do
+    {
+      loggers: loggers_args,
+      action: 'Action',
+      message: 'Message',
+      extra: 'extra',
+      appsignal: { increment_counter: { counter_1: 1 } }
+    }
+  end
 
-  let(:expected_log_message) { { action: 'Action', message: 'Message', args: {} } }
+  let(:expected_log_message) { { action: 'Action', message: 'Message', extra: 'extra' } }
 
   subject { EventTracer }
 
@@ -27,11 +34,13 @@ describe EventTracer do
 
       result = subject.send(selected_log_method, **args)
 
-      expect(result.records[:base].success?).to eq true
-      expect(result.records[:base].error).to eq nil
+      aggregate_failures do
+        expect(result.records[:base].success?).to eq true
+        expect(result.records[:base].error).to eq nil
 
-      expect(result.records[:appsignal].success?).to eq true
-      expect(result.records[:appsignal].error).to eq nil
+        expect(result.records[:appsignal].success?).to eq true
+        expect(result.records[:appsignal].error).to eq nil
+      end
     end
   end
 
@@ -68,7 +77,7 @@ describe EventTracer do
   EventTracer::LOG_TYPES.each do |log_type|
     context "Logging for #{log_type}" do
       let(:selected_log_method) { log_type }
-      
+
       context "Specific code triggers only selected logger" do
         let(:loggers_args) { [:base] }
         it_behaves_like 'base_code_only_triggers_base_logger'

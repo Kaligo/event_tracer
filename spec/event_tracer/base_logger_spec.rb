@@ -7,7 +7,7 @@ describe EventTracer::BaseLogger do
   subject { EventTracer::BaseLogger.new(mock_logger) }
 
   shared_examples_for 'send_formatted_json_message' do
-    let(:log_data) { { action: 'TestAction', message: 'Message', args: payload } }
+    let(:log_data) { { action: 'TestAction', message: 'Message', type: 'info', other_data: 'Burke' } }
     let(:payload) { { type: 'info', other_data: 'Burke' } }
 
     it 'sends formatted payload message' do
