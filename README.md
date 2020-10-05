@@ -104,6 +104,23 @@ EventTracer.info action: 'Action', message: 'Message', appsignal: { increment_co
 #  counter_2, 2
 ```
 
+We can also add [tags](https://docs.appsignal.com/metrics/custom.html#metric-tags) for metric
+
+```ruby
+# Sample usage
+EventTracer.info(
+  action: 'Action',
+  message: 'Message',
+  appsignal: {
+    increment_counter: {
+      counter_1: { value: 1, tags: { region: 'eu' } }
+    }
+  }
+)
+# This calls .increment_counter on Appsignal once with additional tag
+# counter_1, 1, region: 'eu'
+```
+
 **Summary**
 
 In all the generated interface for `EventTracer` logging could look something like this
