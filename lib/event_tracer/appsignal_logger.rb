@@ -22,7 +22,7 @@ module EventTracer
           return LogResult.new(false, "Appsignal metric #{metric} invalid") unless metric_args && metric_args.is_a?(Hash) 
 
           send_metric metric, metric_args
-        rescue Exception => e
+        rescue InvalidTagError => e
           return LogResult.new(false, e.message)
         end
 
@@ -50,7 +50,7 @@ module EventTracer
                 attribute.fetch(:tags)
               )
             rescue KeyError
-              raise Exception, "Appsignal payload { #{increment}: #{attribute} } invalid"
+              raise InvalidTagError, "Appsignal payload { #{increment}: #{attribute} } invalid"
             end
           else
             appsignal.send(metric, increment, attribute)
@@ -58,4 +58,6 @@ module EventTracer
         end
       end
   end
+
+  class InvalidTagError < StandardError; end
 end
