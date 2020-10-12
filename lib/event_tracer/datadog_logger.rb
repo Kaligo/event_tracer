@@ -10,16 +10,15 @@ require_relative './basic_decorator'
 module EventTracer
   class DatadogLogger < BasicDecorator
 
-    SUPPORTED_METRICS ||= %i(increment set distribution gauge histogram).freeze
+    SUPPORTED_METRICS ||= %i[increment set distribution gauge histogram].freeze
 
     LOG_TYPES.each do |log_type|
       define_method log_type do |**args|
-        puts "args are: #{args}"
-        return LogResult.new(false, 'Invalid datadog config') unless args[:datadog] && args[:datadog].is_a?(Hash)
+        return LogResult.new(false, 'Invalid datadog config') unless args[:datadog]&.is_a?(Hash)
 
         applied_metrics(args[:datadog]).each do |metric|
           metric_args = args[:datadog][metric]
-          return LogResult.new(false, "Datadog metric #{metric} invalid") unless metric_args && metric_args.is_a?(Hash)
+          return LogResult.new(false, "Datadog metric #{metric} invalid") unless metric_args&.is_a?(Hash)
 
           send_metric metric, metric_args
         end
@@ -36,14 +35,6 @@ module EventTracer
     def applied_metrics(datadog_args)
       datadog_args.keys.select { |metric| SUPPORTED_METRICS.include?(metric) }
     end
-
-    # increment
-    # while true do
-    #   statsd.increment('example_metric.increment', tags: ['environment:dev'])
-    #   statsd.decrement('example_metric.decrement', tags: ['environment:dev'])
-    #   statsd.count('example_metric.count', 2, tags: ['environment:dev'])
-    #   sleep 10
-    # end
 
     def send_metric(metric, payload)
 
