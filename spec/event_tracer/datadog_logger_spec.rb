@@ -44,6 +44,30 @@ describe EventTracer::DatadogLogger do
         end
       end
 
+      context 'processes_hashed_inputs with tags' do
+        let(:datadog_payload) do
+          {
+            increment: { 'Counter_1' => { value: 1, tags: ['test']}, 'Counter_2' => { value: 2, tags: ['test']} },
+            distribution: { 'Distribution_1' => { value: 10, tags: ['test']} },
+            set: { 'Set_1' => { value: 100, tags: ['test'] } },
+            gauge: { 'Gauge_1' => { value: 100, tags: ['test'] } }
+          }
+        end
+
+        it 'processes each hash keyset as a metric iteration' do
+          expect(mock_datadog).to receive(:increment).with('Counter_1', 1, ['test'])
+          expect(mock_datadog).to receive(:increment).with('Counter_2', 2, ['test'])
+          expect(mock_datadog).to receive(:distribution).with('Distribution_1', 10, ['test'])
+          expect(mock_datadog).to receive(:set).with('Set_1', 100, ['test'])
+          expect(mock_datadog).to receive(:gauge).with('Gauge_1', 100, ['test'])
+
+          result = subject.send(expected_call, datadog: datadog_payload)
+
+          expect(result.success?).to eq true
+          expect(result.error).to eq nil
+        end
+      end
+
       context 'skip_processing_empty_datadog_args' do
         let(:datadog_payload) { {} }
 
@@ -56,6 +80,23 @@ describe EventTracer::DatadogLogger do
 
           expect(result.success?).to eq true
           expect(result.error).to eq nil
+        end
+      end
+
+      context 'processes_hashed_inputs with invalid tag' do
+        let(:datadog_payload) do
+          {
+            increment: { 'Counter_1' => { value: 1, invalid_tag: ['foo'] } }
+          }
+        end
+
+        it 'processes each hash keyset as a metric iteration' do
+          expect(mock_datadog).not_to receive(:increment).with('Counter_1', 1)
+
+          result = subject.send(expected_call, datadog: datadog_payload)
+
+          expect(result.success?).to eq false
+          expect(result.error).to eq 'Datadog payload { Counter_1: {:value=>1, :invalid_tag=>["foo"]} } invalid'
         end
       end
 

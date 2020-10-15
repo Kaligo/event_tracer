@@ -6,9 +6,12 @@ require_relative './basic_decorator'
 #
 # Usage: EventTracer.register :datadog, EventTracer::DataDogLogger.new(DataDog)
 #        data_dog_logger.info datadog: { increment: { counter_1: 1, counter_2: 2 }, set: { gauge_1: 1 } }
+#        data_dog_logger.info datadog: { increment: { counter_1: { value: 1, tags: ['tag1, tag2']} } }
 
 module EventTracer
   class DatadogLogger < BasicDecorator
+
+    class InvalidTagError < StandardError; end
 
     SUPPORTED_METRICS ||= %i[increment set distribution gauge histogram].freeze
 
@@ -21,6 +24,8 @@ module EventTracer
           return LogResult.new(false, "Datadog metric #{metric} invalid") unless metric_args.is_a?(Hash)
 
           send_metric metric, metric_args
+        rescue InvalidTagError => e
+          return LogResult.new(false, e.message)
         end
 
         LogResult.new(true)
@@ -37,9 +42,22 @@ module EventTracer
     end
 
     def send_metric(metric, payload)
+      payload.each do |increment, attribute|
+        if attribute.is_a?(Hash)
+          begin
+            datadog.send(
+              metric,
+              increment,
+              attribute.fetch(:value),
+              attribute.fetch(:tags)
+            )
+          rescue KeyError
+            raise InvalidTagError, "Datadog payload { #{increment}: #{attribute} } invalid"
+          end
+        else
+          datadog.send(metric, increment, attribute)
+        end
 
-      payload.each do |increment, value|
-        datadog.send(metric, increment, value)
       end
     end
   end
