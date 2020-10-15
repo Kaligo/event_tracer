@@ -135,7 +135,7 @@ datadog | increment | Hash | Hash of key-value pairs featuring the metric name a
 
 ```ruby
 # Sample usage
-EventTracer.info action: 'Action', message: 'Message', appsignal: { increment: { counter_1: 1, counter_2: 2 } }
+EventTracer.info action: 'Action', message: 'Message', datadog: { increment: { counter_1: 1, counter_2: { value: 2, tag: ['foo']} } }
 # This calls .increment_counter on Datadog twice with the 2 sets of arguments
 #  counter_1, 1
 #  counter_2, 2
@@ -154,6 +154,12 @@ EventTracer.info(
     add_distribution_value: {
       "distribution_metric_1" => 1000,
       "distribution_metric_2" => 2000
+    }
+  },
+  datadog: {
+    distribution: {
+      "distribution_metric_1" => 1000,
+      "distribution_metric_2" => { value: 2000, tags: ['eu'] }
     }
   }
 )
