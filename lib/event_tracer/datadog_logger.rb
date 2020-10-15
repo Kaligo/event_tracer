@@ -18,7 +18,7 @@ module EventTracer
 
         applied_metrics(args[:datadog]).each do |metric|
           metric_args = args[:datadog][metric]
-          return LogResult.new(false, "Datadog metric #{metric} invalid") unless metric_args&.is_a?(Hash)
+          return LogResult.new(false, "Datadog metric #{metric} invalid") unless metric_args.is_a?(Hash)
 
           send_metric metric, metric_args
         end
