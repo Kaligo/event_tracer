@@ -39,10 +39,8 @@ module EventTracer
     def send_metric(metric, payload)
 
       payload.each do |increment, value|
-        puts "payload contains: increment: #{increment} value: #{value}"
         datadog.send(metric, increment, value)
       end
     end
-
   end
 end
