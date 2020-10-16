@@ -7,7 +7,7 @@ require_relative './basic_decorator'
 #
 # Usage: EventTracer.register :appsignal, EventTracer::AppsignalLogger.new(Appsignal)
 #        appsignal_logger.info appsignal: { increment_counter: { counter_1: 1, counter_2: 2 }, set_gauge: { gauge_1: 1 } }
-#        appsignal_logger.info appsignal: { set_gauge: { gauge_1: { value: 1, region: 'eu' } } }
+#        appsignal_logger.info appsignal: { set_gauge: { gauge_1: { value: 1, tags: { region: 'eu' } } } }
 module EventTracer
   class AppsignalLogger < BasicDecorator
 
