@@ -135,7 +135,7 @@ datadog | increment | Hash | Hash of key-value pairs featuring the metric name a
 
 ```ruby
 # Sample usage
-EventTracer.info action: 'Action', message: 'Message', datadog: { increment: { counter_1: 1, counter_2: { value: 2, tag: ['foo']} } }
+EventTracer.info action: 'Action', message: 'Message', datadog: { increment: { counter_1: 1, counter_2: { value: 2, tags: ['foo']} } }
 # This calls .increment_counter on Datadog twice with the 2 sets of arguments
 #  counter_1, 1
 #  counter_2, 2
