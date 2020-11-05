@@ -49,7 +49,7 @@ module EventTracer
               metric,
               increment,
               attribute.fetch(:value),
-              attribute.fetch(:tags)
+              format_tags(attribute.fetch(:tags))
             )
           rescue KeyError
             raise InvalidTagError, "Datadog payload { #{increment}: #{attribute} } invalid"
@@ -57,7 +57,14 @@ module EventTracer
         else
           datadog.send(metric, increment, attribute)
         end
+      end
+    end
 
+    def format_tags(tags)
+      return tags if tags.is_a?(Array)
+
+      tags.inject([]) do |acc, (tag, value)|
+        acc << "#{tag}|#{value}"
       end
     end
   end
