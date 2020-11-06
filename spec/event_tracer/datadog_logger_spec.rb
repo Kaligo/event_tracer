@@ -47,7 +47,7 @@ describe EventTracer::DatadogLogger do
       context 'processes_hashed_inputs with tags in correct format' do
         let(:datadog_payload) do
           {
-            increment: { 'Counter_1' => { value: 1, tags: ['test']}, 'Counter_2' => { value: 2, tags: ['test']} },
+            increment: { 'Counter_1' => { value: 1 }, 'Counter_2' => { value: 2, tags: ['test']} },
             distribution: { 'Distribution_1' => { value: 10, tags: ['test']} },
             set: { 'Set_1' => { value: 100, tags: ['test'] } },
             gauge: { 'Gauge_1' => { value: 100, tags: ['test'] } }
@@ -55,11 +55,11 @@ describe EventTracer::DatadogLogger do
         end
 
         it 'processes each hash keyset as a metric iteration' do
-          expect(mock_datadog).to receive(:count).with('Counter_1', 1, ['test'])
-          expect(mock_datadog).to receive(:count).with('Counter_2', 2, ['test'])
-          expect(mock_datadog).to receive(:distribution).with('Distribution_1', 10, ['test'])
-          expect(mock_datadog).to receive(:set).with('Set_1', 100, ['test'])
-          expect(mock_datadog).to receive(:gauge).with('Gauge_1', 100, ['test'])
+          expect(mock_datadog).to receive(:count).with('Counter_1', 1, {})
+          expect(mock_datadog).to receive(:count).with('Counter_2', 2, tags: ['test'])
+          expect(mock_datadog).to receive(:distribution).with('Distribution_1', 10, tags: ['test'])
+          expect(mock_datadog).to receive(:set).with('Set_1', 100, tags: ['test'])
+          expect(mock_datadog).to receive(:gauge).with('Gauge_1', 100, tags: ['test'])
 
           result = subject.send(expected_call, datadog: datadog_payload)
 
@@ -72,7 +72,7 @@ describe EventTracer::DatadogLogger do
         let(:datadog_payload) do
           {
             increment: {
-              'Counter_1' => { value: 1, tags: { test: 'value' } },
+              'Counter_1' => { value: 1 },
               'Counter_2' => { value: 2, tags: { test: 'value' } }
             },
             distribution: { 'Distribution_1' => { value: 10, tags: { test: 'value' } } },
@@ -82,11 +82,11 @@ describe EventTracer::DatadogLogger do
         end
 
         it 'processes each hash keyset as a metric iteration' do
-          expect(mock_datadog).to receive(:count).with('Counter_1', 1, ['test|value'])
-          expect(mock_datadog).to receive(:count).with('Counter_2', 2, ['test|value'])
-          expect(mock_datadog).to receive(:distribution).with('Distribution_1', 10, ['test|value'])
-          expect(mock_datadog).to receive(:set).with('Set_1', 100, ['test|value'])
-          expect(mock_datadog).to receive(:gauge).with('Gauge_1', 100, ['test|value'])
+          expect(mock_datadog).to receive(:count).with('Counter_1', 1, {})
+          expect(mock_datadog).to receive(:count).with('Counter_2', 2, tags: ['test|value'])
+          expect(mock_datadog).to receive(:distribution).with('Distribution_1', 10, tags: ['test|value'])
+          expect(mock_datadog).to receive(:set).with('Set_1', 100, tags: ['test|value'])
+          expect(mock_datadog).to receive(:gauge).with('Gauge_1', 100, tags: ['test|value'])
 
           result = subject.send(expected_call, datadog: datadog_payload)
 
@@ -99,9 +99,11 @@ describe EventTracer::DatadogLogger do
         let(:datadog_payload) { {} }
 
         it 'skips any metric processing' do
-          expect(mock_datadog).not_to receive(:increment_counter)
-          expect(mock_datadog).not_to receive(:add_distribution_value)
-          expect(mock_datadog).not_to receive(:set_gauge)
+          expect(mock_datadog).not_to receive(:count)
+          expect(mock_datadog).not_to receive(:distribution)
+          expect(mock_datadog).not_to receive(:histogram)
+          expect(mock_datadog).not_to receive(:set)
+          expect(mock_datadog).not_to receive(:gauge)
 
           result = subject.send(expected_call, datadog: datadog_payload)
 
@@ -110,10 +112,26 @@ describe EventTracer::DatadogLogger do
         end
       end
 
-      context 'processes_hashed_inputs with invalid tag' do
+      context 'processes_hashed_inputs with value and tag is nil' do
         let(:datadog_payload) do
           {
-            increment: { 'Counter_1' => { value: 1, invalid_tag: ['foo'] } }
+            increment: { 'Counter_1' => { value: 1, tag: nil } }
+          }
+        end
+
+        it 'processes each hash keyset as a metric iteration' do
+          expect(mock_datadog).to receive(:count).with('Counter_1', 1, {})
+
+          result = subject.send(expected_call, datadog: datadog_payload)
+
+          expect(result.success?).to eq true
+        end
+      end
+
+      context 'processes_hashed_inputs with no value key' do
+        let(:datadog_payload) do
+          {
+            increment: { 'Counter_1' => { no_value: 1 } }
           }
         end
 
@@ -123,7 +141,7 @@ describe EventTracer::DatadogLogger do
           result = subject.send(expected_call, datadog: datadog_payload)
 
           expect(result.success?).to eq false
-          expect(result.error).to eq 'Datadog payload { Counter_1: {:value=>1, :invalid_tag=>["foo"]} } invalid'
+          expect(result.error).to eq 'Datadog payload { Counter_1: {:no_value=>1} } invalid'
         end
       end
 
@@ -155,9 +173,11 @@ describe EventTracer::DatadogLogger do
               let(:datadog_payload) { { metric => payload } }
 
               it 'rejects the payload when invalid datadog values are given' do
-                expect(mock_datadog).not_to receive(:increment_counter)
-                expect(mock_datadog).not_to receive(:add_distribution_value)
-                expect(mock_datadog).not_to receive(:set_gauge)
+                expect(mock_datadog).not_to receive(:count)
+                expect(mock_datadog).not_to receive(:distribution)
+                expect(mock_datadog).not_to receive(:histogram)
+                expect(mock_datadog).not_to receive(:set)
+                expect(mock_datadog).not_to receive(:gauge)
 
                 result = subject.send(expected_call, datadog: datadog_payload)
 
