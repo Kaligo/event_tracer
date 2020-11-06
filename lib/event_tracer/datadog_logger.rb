@@ -46,7 +46,7 @@ module EventTracer
         if attribute.is_a?(Hash)
           begin
             datadog.send(
-              metric,
+              format_metric(metric),
               increment,
               attribute.fetch(:value),
               format_tags(attribute.fetch(:tags))
@@ -55,7 +55,7 @@ module EventTracer
             raise InvalidTagError, "Datadog payload { #{increment}: #{attribute} } invalid"
           end
         else
-          datadog.send(metric, increment, attribute)
+          datadog.send(format_metric(metric), increment, attribute)
         end
       end
     end
@@ -66,6 +66,10 @@ module EventTracer
       tags.inject([]) do |acc, (tag, value)|
         acc << "#{tag}|#{value}"
       end
+    end
+
+    def format_metric(metric)
+      metric == :increment ? :count : metric
     end
   end
 end
