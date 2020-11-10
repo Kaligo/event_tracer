@@ -44,7 +44,7 @@ module EventTracer
       payload.each do |increment, attribute|
         if attribute.is_a?(Hash)
           begin
-            datadog.send(
+            datadog.public_send(
               metric,
               increment,
               attribute.fetch(:value),
@@ -54,7 +54,7 @@ module EventTracer
             raise InvalidTagError, "Datadog payload { #{increment}: #{attribute} } invalid"
           end
         else
-          datadog.send(metric, increment, attribute)
+          datadog.public_send(metric, increment, attribute)
         end
       end
     end
