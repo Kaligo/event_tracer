@@ -25,8 +25,6 @@ module EventTracer
           return LogResult.new(false, "Datadog metric #{metric} invalid") unless metric_args.is_a?(Hash)
 
           send_metric metric, metric_args
-        rescue InvalidTagError => e
-          return LogResult.new(false, e.message)
         end
 
         LogResult.new(true)

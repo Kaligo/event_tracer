@@ -128,23 +128,6 @@ describe EventTracer::DatadogLogger do
         end
       end
 
-      context 'processes_hashed_inputs with no value key' do
-        let(:datadog_payload) do
-          {
-            count: { 'Counter_1' => { no_value: 1 } }
-          }
-        end
-
-        it 'processes each hash keyset as a metric iteration' do
-          expect(mock_datadog).not_to receive(:count).with('Counter_1', 1)
-
-          result = subject.send(expected_call, datadog: datadog_payload)
-
-          expect(result.success?).to eq false
-          expect(result.error).to eq 'Datadog payload { Counter_1: {:no_value=>1} } invalid'
-        end
-      end
-
       context 'rejects_invalid_datadog_args' do
         INVALID_PAYLOADS.each do |datadog_value|
           context 'Invalid datadog top-level args' do
