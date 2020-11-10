@@ -49,7 +49,7 @@ module EventTracer
               format_metric(metric),
               increment,
               attribute.fetch(:value),
-              build_options(attribute.dig(:tags))
+              build_options(attribute[:tags])
             )
           rescue KeyError
             raise InvalidTagError, "Datadog payload { #{increment}: #{attribute} } invalid"
