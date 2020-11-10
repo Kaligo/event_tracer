@@ -12,7 +12,7 @@ This gem currently supports only:
     2. add_distribution_value
     3. set_gauge
 3. Datadog:  Empty wrapper around the custom metric distributions
-    1. increment
+    1. count
     2. distribution
     3. set
     4. gauge
@@ -127,7 +127,7 @@ The interface for using the Appsignal wrapper is:
 
 Key | Secondary key | Secondary key type | Values
 --------------|-------------|------------------|-------
-datadog | increment | Hash | Hash of key-value pairs featuring the metric name and the counter value to send
+datadog | count | Hash | Hash of key-value pairs featuring the metric name and the counter value to send
 | | distribution | Hash | Hash of key-value pairs featuring the metric name and the distribution value to send
 | | set | Hash | Hash of key-value pairs featuring the metric name and the set value to send
 | | gauge | Hash | Hash of key-value pairs featuring the metric name and the gauge value to send
@@ -135,8 +135,8 @@ datadog | increment | Hash | Hash of key-value pairs featuring the metric name a
 
 ```ruby
 # Sample usage
-EventTracer.info action: 'Action', message: 'Message', datadog: { increment: { counter_1: 1, counter_2: { value: 2, tags: ['foo']} } }
-# This calls .increment_counter on Datadog twice with the 2 sets of arguments
+EventTracer.info action: 'Action', message: 'Message', datadog: { count: { counter_1: 1, counter_2: { value: 2, tags: ['foo']} } }
+# This calls .count on Datadog twice with the 2 sets of arguments
 #  counter_1, 1
 #  counter_2, 2
 ```

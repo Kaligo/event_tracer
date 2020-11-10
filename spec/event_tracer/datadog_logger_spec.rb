@@ -23,7 +23,7 @@ describe EventTracer::DatadogLogger do
       context 'processes_hashed_inputs' do
         let(:datadog_payload) do
           {
-            increment: { 'Counter_1' => 1, 'Counter_2' => 2 },
+            count: { 'Counter_1' => 1, 'Counter_2' => 2 },
             distribution: { 'Distribution_1' => 10 },
             set: { 'Set_1' => 100 },
             gauge: { 'Gauge_1' => 100 }
@@ -47,7 +47,7 @@ describe EventTracer::DatadogLogger do
       context 'processes_hashed_inputs with tags in correct format' do
         let(:datadog_payload) do
           {
-            increment: { 'Counter_1' => { value: 1 }, 'Counter_2' => { value: 2, tags: ['test']} },
+            count: { 'Counter_1' => { value: 1 }, 'Counter_2' => { value: 2, tags: ['test']} },
             distribution: { 'Distribution_1' => { value: 10, tags: ['test']} },
             set: { 'Set_1' => { value: 100, tags: ['test'] } },
             gauge: { 'Gauge_1' => { value: 100, tags: ['test'] } }
@@ -71,7 +71,7 @@ describe EventTracer::DatadogLogger do
       context 'processes_hashed_inputs with tags as hash' do
         let(:datadog_payload) do
           {
-            increment: {
+            count: {
               'Counter_1' => { value: 1 },
               'Counter_2' => { value: 2, tags: { test: 'value' } }
             },
@@ -115,7 +115,7 @@ describe EventTracer::DatadogLogger do
       context 'processes_hashed_inputs with value and tag is nil' do
         let(:datadog_payload) do
           {
-            increment: { 'Counter_1' => { value: 1, tag: nil } }
+            count: { 'Counter_1' => { value: 1, tag: nil } }
           }
         end
 
@@ -131,7 +131,7 @@ describe EventTracer::DatadogLogger do
       context 'processes_hashed_inputs with no value key' do
         let(:datadog_payload) do
           {
-            increment: { 'Counter_1' => { no_value: 1 } }
+            count: { 'Counter_1' => { no_value: 1 } }
           }
         end
 

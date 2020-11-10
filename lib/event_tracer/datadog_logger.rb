@@ -1,19 +1,20 @@
 require_relative '../event_tracer'
 require_relative './basic_decorator'
+require 'pry'
 # NOTES
 # Datadog interface to send our usual actions
 # BasicDecorator adds a transparent interface on top of the datadog interface
 #
 # Usage: EventTracer.register :datadog, EventTracer::DataDogLogger.new(DataDog)
-#        data_dog_logger.info datadog: { increment: { counter_1: 1, counter_2: 2 }, set: { gauge_1: 1 } }
-#        data_dog_logger.info datadog: { increment: { counter_1: { value: 1, tags: ['tag1, tag2']} } }
+#        data_dog_logger.info datadog: { count: { counter_1: 1, counter_2: 2 }, set: { gauge_1: 1 } }
+#        data_dog_logger.info datadog: { count: { counter_1: { value: 1, tags: ['tag1, tag2']} } }
 
 module EventTracer
   class DatadogLogger < BasicDecorator
 
     class InvalidTagError < StandardError; end
 
-    SUPPORTED_METRICS ||= %i[increment set distribution gauge histogram].freeze
+    SUPPORTED_METRICS ||= %i[count set distribution gauge histogram].freeze
 
     LOG_TYPES.each do |log_type|
       define_method log_type do |**args|
@@ -46,7 +47,7 @@ module EventTracer
         if attribute.is_a?(Hash)
           begin
             datadog.send(
-              format_metric(metric),
+              metric,
               increment,
               attribute.fetch(:value),
               build_options(attribute[:tags])
@@ -55,7 +56,7 @@ module EventTracer
             raise InvalidTagError, "Datadog payload { #{increment}: #{attribute} } invalid"
           end
         else
-          datadog.send(format_metric(metric), increment, attribute)
+          datadog.send(metric, increment, attribute)
         end
       end
     end
@@ -72,10 +73,6 @@ module EventTracer
           end
         end
       { tags: formattted_tags }
-    end
-
-    def format_metric(metric)
-      metric == :increment ? :count : metric
     end
   end
 end
