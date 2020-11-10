@@ -1,6 +1,5 @@
 require_relative '../event_tracer'
 require_relative './basic_decorator'
-require 'pry'
 # NOTES
 # Datadog interface to send our usual actions
 # BasicDecorator adds a transparent interface on top of the datadog interface
