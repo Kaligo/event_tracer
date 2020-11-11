@@ -66,7 +66,7 @@ module EventTracer
           tags
         else
           tags.inject([]) do |acc, (tag, value)|
-            acc << "#{tag}|#{value}"
+            acc << "#{tag}:#{value}"
           end
         end
       { tags: formattted_tags }

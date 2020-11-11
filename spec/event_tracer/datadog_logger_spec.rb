@@ -83,10 +83,10 @@ describe EventTracer::DatadogLogger do
 
         it 'processes each hash keyset as a metric iteration' do
           expect(mock_datadog).to receive(:count).with('Counter_1', 1, {})
-          expect(mock_datadog).to receive(:count).with('Counter_2', 2, tags: ['test|value'])
-          expect(mock_datadog).to receive(:distribution).with('Distribution_1', 10, tags: ['test|value'])
-          expect(mock_datadog).to receive(:set).with('Set_1', 100, tags: ['test|value'])
-          expect(mock_datadog).to receive(:gauge).with('Gauge_1', 100, tags: ['test|value'])
+          expect(mock_datadog).to receive(:count).with('Counter_2', 2, tags: ['test:value'])
+          expect(mock_datadog).to receive(:distribution).with('Distribution_1', 10, tags: ['test:value'])
+          expect(mock_datadog).to receive(:set).with('Set_1', 100, tags: ['test:value'])
+          expect(mock_datadog).to receive(:gauge).with('Gauge_1', 100, tags: ['test:value'])
 
           result = subject.send(expected_call, datadog: datadog_payload)
 
