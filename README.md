@@ -11,6 +11,12 @@ This gem currently supports only:
     1. increment_counter
     2. add_distribution_value
     3. set_gauge
+3. Datadog:  Empty wrapper around the custom metric distributions
+    1. count
+    2. distribution
+    3. set
+    4. gauge
+    5. histogram    
 
 No dependencies are declared for this as the  
 
@@ -50,6 +56,7 @@ Each initialised logger is then registered to `EventTracer`.
 ```ruby
 EventTracer.register :base, base_logger
 EventTracer.register :appsignal, appsignal_logger
+EventTracer.register :datadog, datadog_logger
 ```
 
 As this is a registry, you can set it up with your own implemented wrapper as long as it responds to the following `LOG_TYPES` methods: `info, warn, error`
@@ -119,6 +126,35 @@ EventTracer.info(
 )
 # This calls .increment_counter on Appsignal once with additional tag
 # counter_1, 1, region: 'eu'
+
+**3. Datadog**
+
+Datadog via dogstatsd-ruby (4.8.1) is currently supported for the following metric functions available for the EventTracer's log methods
+
+- increment
+- distribution
+- set
+- gauge
+- histogram
+
+All other functions are exposed transparently to the underlying Appsignal class
+
+The interface for using the Appsignal wrapper is:
+
+Key | Secondary key | Secondary key type | Values
+--------------|-------------|------------------|-------
+datadog | count | Hash | Hash of key-value pairs featuring the metric name and the counter value to send
+| | distribution | Hash | Hash of key-value pairs featuring the metric name and the distribution value to send
+| | set | Hash | Hash of key-value pairs featuring the metric name and the set value to send
+| | gauge | Hash | Hash of key-value pairs featuring the metric name and the gauge value to send
+| | histogram | Hash | Hash of key-value pairs featuring the metric name and the histogram value to send
+
+```ruby
+# Sample usage
+EventTracer.info action: 'Action', message: 'Message', datadog: { count: { counter_1: 1, counter_2: { value: 2, tags: ['foo']} } }
+# This calls .count on Datadog twice with the 2 sets of arguments
+#  counter_1, 1
+#  counter_2, 2
 ```
 
 **Summary**
@@ -127,13 +163,19 @@ In all the generated interface for `EventTracer` logging could look something li
 
 ```ruby
 EventTracer.info(
-  loggers: [:base, :appsignal, :custom_logging_service]
+  loggers: %(base appsignal custom_logging_service datadog),
   action: 'NewTransaction',
   message: "New transaction created by API",
   appsignal: {
     add_distribution_value: {
       "distribution_metric_1" => 1000,
       "distribution_metric_2" => 2000
+    }
+  },
+  datadog: {
+    distribution: {
+      "distribution_metric_1" => 1000,
+      "distribution_metric_2" => { value: 2000, tags: ['eu'] }
     }
   }
 )
