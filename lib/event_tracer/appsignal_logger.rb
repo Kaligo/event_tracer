@@ -7,6 +7,7 @@ require_relative './basic_decorator'
 #
 # Usage: EventTracer.register :appsignal, EventTracer::AppsignalLogger.new(Appsignal)
 #        appsignal_logger.info appsignal: { increment_counter: { counter_1: 1, counter_2: 2 }, set_gauge: { gauge_1: 1 } }
+#        appsignal_logger.info appsignal: { set_gauge: { gauge_1: { value: 1, tags: { region: 'eu' } } } }
 module EventTracer
   class AppsignalLogger < BasicDecorator
 
@@ -21,6 +22,8 @@ module EventTracer
           return LogResult.new(false, "Appsignal metric #{metric} invalid") unless metric_args && metric_args.is_a?(Hash) 
 
           send_metric metric, metric_args
+        rescue InvalidTagError => e
+          return LogResult.new(false, e.message)
         end
 
         LogResult.new(true)
@@ -37,10 +40,24 @@ module EventTracer
       end
 
       def send_metric(metric, payload)
-        payload.each do |increment, value|
-          appsignal.send(metric, increment, value)
+        payload.each do |increment, attribute|
+          if attribute.is_a?(Hash)
+            begin
+              appsignal.send(
+                metric,
+                increment,
+                attribute.fetch(:value),
+                attribute.fetch(:tags)
+              )
+            rescue KeyError
+              raise InvalidTagError, "Appsignal payload { #{increment}: #{attribute} } invalid"
+            end
+          else
+            appsignal.send(metric, increment, attribute)
+          end
         end
       end
-
   end
+
+  class InvalidTagError < StandardError; end
 end

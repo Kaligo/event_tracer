@@ -51,17 +51,26 @@ describe EventTracer::AppsignalLogger do
   end
 
   shared_examples_for 'processes_hashed_inputs' do
-    let(:appsignal_payload) { {
-      increment_counter: { 'Counter_1' => 1, 'Counter_2' => 2 },
-      add_distribution_value: { 'Distribution_1' => 10 },
-      set_gauge: { 'Gauge_1' => 100 }
-    } }
+    let(:appsignal_payload) do
+      {
+        increment_counter: {
+          'Counter_1' => { value: 1, tags: { tag_a: 'a', tag_b: 'b' } },
+          'Counter_2' => 2
+        },
+        add_distribution_value: { 'Distribution_1' => 10 },
+        set_gauge: {
+          'Gauge_1' => 100,
+          'Gauge_2' => { value: 200, tags: { region: 'eu' } }
+        }
+      }
+    end
 
     it 'processes each hash keyset as a metric iteration' do
-      expect(mock_appsignal).to receive(:increment_counter).with('Counter_1', 1)
+      expect(mock_appsignal).to receive(:increment_counter).with('Counter_1', 1, tag_a: 'a', tag_b: 'b')
       expect(mock_appsignal).to receive(:increment_counter).with('Counter_2', 2)
       expect(mock_appsignal).to receive(:add_distribution_value).with('Distribution_1', 10)
       expect(mock_appsignal).to receive(:set_gauge).with('Gauge_1', 100)
+      expect(mock_appsignal).to receive(:set_gauge).with('Gauge_2', 200, region: 'eu')
 
       result = subject.send(expected_call, appsignal: appsignal_payload)
 
@@ -86,6 +95,27 @@ describe EventTracer::AppsignalLogger do
             expect(result.success?).to eq false
             expect(result.error).to eq "Appsignal metric #{metric} invalid"
           end
+        end
+      end
+
+      context 'with invalid tagging payload' do
+        let(:appsignal_payload) do
+          {
+            metric => {
+              'Counter_1' => { value: 1, tag: { tag_a: 'a' } }
+            }
+          }
+        end
+
+        it 'rejects the payload and return failure result' do
+          expect(mock_appsignal).not_to receive(:increment_counter)
+          expect(mock_appsignal).not_to receive(:add_distribution_value)
+          expect(mock_appsignal).not_to receive(:set_gauge)
+
+          result = subject.send(expected_call, appsignal: appsignal_payload)
+
+          expect(result.success?).to eq false
+          expect(result.error).to eq "Appsignal payload { Counter_1: {:value=>1, :tag=>{:tag_a=>\"a\"}} } invalid"
         end
       end
     end

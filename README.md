@@ -111,6 +111,22 @@ EventTracer.info action: 'Action', message: 'Message', appsignal: { increment_co
 #  counter_2, 2
 ```
 
+We can also add [tags](https://docs.appsignal.com/metrics/custom.html#metric-tags) for metric
+
+```ruby
+# Sample usage
+EventTracer.info(
+  action: 'Action',
+  message: 'Message',
+  appsignal: {
+    increment_counter: {
+      counter_1: { value: 1, tags: { region: 'eu' } }
+    }
+  }
+)
+# This calls .increment_counter on Appsignal once with additional tag
+# counter_1, 1, region: 'eu'
+
 **3. Datadog**
 
 Datadog via dogstatsd-ruby (4.8.1) is currently supported for the following metric functions available for the EventTracer's log methods
