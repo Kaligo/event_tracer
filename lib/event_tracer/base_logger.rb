@@ -7,8 +7,8 @@ module EventTracer
   class BaseLogger < BasicDecorator
 
     LOG_TYPES.each do |log_type|
-      define_method log_type do |*args|
-        send_message(log_type, *args)
+      define_method log_type do |**args|
+        send_message(log_type, **args)
         LogResult.new(true)
       end
     end

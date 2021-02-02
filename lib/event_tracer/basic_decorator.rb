@@ -1,3 +1,5 @@
+require 'delegate'
+
 module EventTracer
   class BasicDecorator < Delegator
 
