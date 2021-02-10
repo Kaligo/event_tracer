@@ -33,7 +33,7 @@ module EventTracer
       loggers.each do |code, logger|
         begin
           if args[:action] && args[:message]
-            result.record code, logger.send(log_type, filtered_log_arguments(code, args))
+            result.record code, logger.send(log_type, **filtered_log_arguments(code, args))
           else
             result.record code, LogResult.new(false, 'Fields action & message need to be populated')
           end
