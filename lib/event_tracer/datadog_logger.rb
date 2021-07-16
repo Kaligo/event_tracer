@@ -4,26 +4,46 @@ require_relative './basic_decorator'
 # Datadog interface to send our usual actions
 # BasicDecorator adds a transparent interface on top of the datadog interface
 #
-# Usage: EventTracer.register :datadog, EventTracer::DataDogLogger.new(DataDog)
-#        data_dog_logger.info datadog: { count: { counter_1: 1, counter_2: 2 }, set: { gauge_1: 1 } }
-#        data_dog_logger.info datadog: { count: { counter_1: { value: 1, tags: ['tag1, tag2']} } }
+# Usage: EventTracer.register :datadog,
+#          EventTracer::DataDogLogger.new(DataDog, allowed_tags: ['tag_1', 'tag_2'])
+#
+#        data_dog_logger.info metrics: [:counter_1, :counter_2]
+#        data_dog_logger.info metrics: { counter_1: { type: :counter, value: 1}, gauce_2: { type: :gauce, value: 10 } }
 
 module EventTracer
   class DatadogLogger < BasicDecorator
 
-    class InvalidTagError < StandardError; end
+    SUPPORTED_METRIC_TYPES = {
+      counter: :count,
+      distribution: :distribution,
+      gauge: :gauge,
+      set: :set,
+      histogram: :histogram
+    }
+    DEFAULT_METRIC_TYPE = :count
+    DEFAULT_COUNTER = 1
 
-    SUPPORTED_METRICS ||= %i[count set distribution gauge histogram].freeze
+    def initialize(decoratee, allowed_tags: [])
+      super(decoratee)
+      @allowed_tags = allowed_tags
+    end
 
     LOG_TYPES.each do |log_type|
       define_method log_type do |**args|
-        return LogResult.new(false, 'Invalid datadog config') unless args[:datadog]&.is_a?(Hash)
+        tags = build_tags(args)
 
-        applied_metrics(args[:datadog]).each do |metric|
-          metric_args = args[:datadog][metric]
-          return LogResult.new(false, "Datadog metric #{metric} invalid") unless metric_args.is_a?(Hash)
-
-          send_metric metric, metric_args
+        case args[:metrics]
+        when Array
+          args[:metrics].each do |metric|
+            appsignal.public_send(DEFAULT_METRIC_TYPE, metric, DEFAULT_COUNTER, tags: tags)
+          end
+        when Hash
+          args[:metrics].each do |metric_name, metric_payload|
+            metric_type = SUPPORTED_METRIC_TYPES[metric_payload[:type].to_sym]
+            appsignal.public_send(metric_type, metric_name, metric_payload[:value], tags: tags)
+          end
+        else
+          return LogResult.new(false, 'Invalid DataDog config')
         end
 
         LogResult.new(true)
@@ -32,44 +52,13 @@ module EventTracer
 
     private
 
-    attr_reader :datadog, :decoratee
+    attr_reader :decoratee, :allowed_tags
     alias_method :datadog, :decoratee
 
-    def applied_metrics(datadog_args)
-      datadog_args.keys.select { |metric| SUPPORTED_METRICS.include?(metric) }
-    end
-
-    def send_metric(metric, payload)
-      payload.each do |increment, attribute|
-        if attribute.is_a?(Hash)
-          begin
-            datadog.public_send(
-              metric,
-              increment,
-              attribute.fetch(:value),
-              build_options(attribute[:tags])
-            )
-          rescue KeyError
-            raise InvalidTagError, "Datadog payload { #{increment}: #{attribute} } invalid"
-          end
-        else
-          datadog.public_send(metric, increment, attribute)
-        end
+    def build_tags(args)
+      args.slice(**allowed_tags).map do |tag, value|
+        "#{tag}:#{value}"
       end
-    end
-
-    def build_options(tags)
-      return {} unless tags
-
-      formattted_tags =
-        if tags.is_a?(Array)
-          tags
-        else
-          tags.inject([]) do |acc, (tag, value)|
-            acc << "#{tag}:#{value}"
-          end
-        end
-      { tags: formattted_tags }
     end
   end
 end

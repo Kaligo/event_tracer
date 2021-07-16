@@ -4,7 +4,7 @@
 
 EventTracer is a thin wrapper to aggregate multiple logging services as a single component with a common interface for utilising the different underlying services.
 
-This gem currently supports only: 
+This gem currently supports only:
 
 1. Base logger (payload in JSON format): Can be initialised around the default loggers like thos of Rails or Hanami
 2. Appsignal: Empty wrapper around the custom metric distributions
@@ -16,9 +16,9 @@ This gem currently supports only:
     2. distribution
     3. set
     4. gauge
-    5. histogram    
+    5. histogram
 
-No dependencies are declared for this as the  
+No dependencies are declared for this as the
 
 ## Installation
 
@@ -51,7 +51,7 @@ appsignal_logger = EventTracer::AppsignalLogger.new(Appsignal)
 
 **2. Registering the wrapped loggers**
 
-Each initialised logger is then registered to `EventTracer`. 
+Each initialised logger is then registered to `EventTracer`.
 
 ```ruby
 EventTracer.register :base, base_logger
@@ -65,7 +65,7 @@ As this is a registry, you can set it up with your own implemented wrapper as lo
 
 **Top-level Controls**
 
-You can control the loggers to use when sending the event by using the top-level `loggers` key to specify the logger service(s) to apply to. 
+You can control the loggers to use when sending the event by using the top-level `loggers` key to specify the logger service(s) to apply to.
 
 Key | Key type | Required | Values
 ----|----------|----------|--------
@@ -77,7 +77,8 @@ This accepts an array of the loggers' codes which will be used to select the log
 
 **1. Base Logger**
 
-The base logger only with the following format using a `message`, `action` and all remaining arguments are rendered in a JSON payload
+The base logger only with the following format using a `message`,
+`action` and all remaining arguments are rendered in a JSON payload
 
 ```ruby
 # Sample usage
@@ -85,100 +86,76 @@ EventTracer.info action: 'Action', message: 'Message', other_args: 'data'
 => "[Action] message {\"other_args\":\"data\"}"
 ```
 
-**2. Appsignal**
+**2. Metrics**
 
-Appsignal 2.5.1 is currently supported for the following metric functions available for the EventTracer's log methods
+EventTracer allows sending metrics together with your log. Currently two
+monitoring services are supported: AppSignal and DataDog.
 
-- increment_counter
-- add_distribution_value
-- set_gauge
-
-All other functions are exposed transparently to the underlying Appsignal class
-
-The interface for using the Appsignal wrapper is:
-
-Key | Secondary key | Secondary key type | Values
---------------|-------------|------------------|-------
-appsignal | increment_counter | Hash | Hash of key-value pairs featuring the metric name and the counter value to send
-| | add_distribution_value | Hash | Hash of key-value pairs featuring the metric name and the distribution value to send
-| | set_gauge | Hash | Hash of key-value pairs featuring the metric name and the gauge value to send
+All metrics are sent in `metrics` fields, for example:
 
 ```ruby
-# Sample usage
-EventTracer.info action: 'Action', message: 'Message', appsignal: { increment_counter: { counter_1: 1, counter_2: 2 } }
-# This calls .increment_counter on Appsignal twice with the 2 sets of arguments
-#  counter_1, 1
-#  counter_2, 2
+EventTracer.info(
+  action: 'Action',
+  message: 'There is an action',
+  metrics: [
+    :metric_1,
+    { metric_2: :gauce },
+    { metric_3: { value: 10, type: :distribution } }
+  ]
+)
 ```
 
-We can also add [tags](https://docs.appsignal.com/metrics/custom.html#metric-tags) for metric
+Extra data in the payload can also be filtered to create tags for each metric:
 
 ```ruby
-# Sample usage
+EventTracer.register :appsignal, AppsignalLogger.new(Appsignal, allowed_tags: [:extra_data])
+```
+
+Currently, tags apply for all metrics, we don't have support individual tagging yet.
+
+
+### Appsignal integration
+
+Appsignal >= 2.5 is currently supported for the following metric functions:
+
+| AppSignal function     | EventTracer key |
+--------------------------------------------
+| increment_counter      | counter         |
+| add_distribution_value | distribution    |
+| set_gauge              | gauce           |
+
+We can also add [tags](https://docs.appsignal.com/metrics/custom.html#metric-tags) for metric:
+
+```ruby
 EventTracer.info(
   action: 'Action',
   message: 'Message',
-  appsignal: {
-    increment_counter: {
-      counter_1: { value: 1, tags: { region: 'eu' } }
-    }
-  }
+  metrics: [:counter_1],
+  region: 'eu'
 )
 # This calls .increment_counter on Appsignal once with additional tag
 # counter_1, 1, region: 'eu'
+```
 
-**3. Datadog**
+### DataDog integration
 
-Datadog via dogstatsd-ruby (4.8.1) is currently supported for the following metric functions available for the EventTracer's log methods
+Datadog via dogstatsd-ruby (version >= 4.8) is currently supported for the following metric functions:
 
-- increment
-- distribution
-- set
-- gauge
-- histogram
+| AppSignal function     | EventTracer key |
+--------------------------------------------
+| increment              | counter         |
+| distribution           | distribution    |
+| gauge                  | gauge           |
+| set                    | set             |
+| histogram              | histogram       |
 
-All other functions are exposed transparently to the underlying Appsignal class
-
-The interface for using the Appsignal wrapper is:
-
-Key | Secondary key | Secondary key type | Values
---------------|-------------|------------------|-------
-datadog | count | Hash | Hash of key-value pairs featuring the metric name and the counter value to send
-| | distribution | Hash | Hash of key-value pairs featuring the metric name and the distribution value to send
-| | set | Hash | Hash of key-value pairs featuring the metric name and the set value to send
-| | gauge | Hash | Hash of key-value pairs featuring the metric name and the gauge value to send
-| | histogram | Hash | Hash of key-value pairs featuring the metric name and the histogram value to send
 
 ```ruby
-# Sample usage
-EventTracer.info action: 'Action', message: 'Message', datadog: { count: { counter_1: 1, counter_2: { value: 2, tags: ['foo']} } }
+EventTracer.info action: 'Action', message: 'Message',
+  metrics: [:counter_1, { counter_2: 2 }]
 # This calls .count on Datadog twice with the 2 sets of arguments
 #  counter_1, 1
 #  counter_2, 2
-```
-
-**Summary**
-
-In all the generated interface for `EventTracer` logging could look something like this
-
-```ruby
-EventTracer.info(
-  loggers: %(base appsignal custom_logging_service datadog),
-  action: 'NewTransaction',
-  message: "New transaction created by API",
-  appsignal: {
-    add_distribution_value: {
-      "distribution_metric_1" => 1000,
-      "distribution_metric_2" => 2000
-    }
-  },
-  datadog: {
-    distribution: {
-      "distribution_metric_1" => 1000,
-      "distribution_metric_2" => { value: 2000, tags: ['eu'] }
-    }
-  }
-)
 ```
 
 ### Results
@@ -195,6 +172,24 @@ Each log result is mapped to the code of the activated logger
 result = EventTracer.info action: '123', message: '' # <EventTracer::Result @records={:base=>#<struct EventTracer::LogResult :success?=true, error=nil>}>
 result.records[:base].success? => true
 result.records[:base].error => nil
+```
+
+### Summary
+
+In all the generated interface for `EventTracer` logging could look something like this
+
+```ruby
+EventTracer.info(
+  loggers: %(base appsignal custom_logging_service datadog),
+  action: 'NewTransaction',
+  message: "New transaction created by API",
+  metrics: [
+    { distribution_metric_1: 1000 },
+    { distribution_metric_2: 2000 }
+  ],
+  region: 'eu',
+  tenant: 'SomeTenant'
+)
 ```
 
 ## Development
