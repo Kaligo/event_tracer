@@ -4,29 +4,49 @@ describe EventTracer::AppsignalLogger do
 
   INVALID_PAYLOADS ||= [
     nil,
-    [],
     Object.new,
     'string',
     10,
     :invalid_payload
   ].freeze
 
-  let(:appsignal_payload) { nil }
+  let(:allowed_tags) { [:tenant_id] }
   let(:mock_appsignal) { MockAppsignal.new }
 
-  subject { EventTracer::AppsignalLogger.new(mock_appsignal) }
+  subject { EventTracer::AppsignalLogger.new(mock_appsignal, allowed_tags: allowed_tags) }
+
+  shared_examples_for 'skip_processing_empty_appsignal_args' do
+    it 'skips any metric processing' do
+      expect(mock_appsignal).not_to receive(:increment_counter)
+      expect(mock_appsignal).not_to receive(:add_distribution_value)
+      expect(mock_appsignal).not_to receive(:set_gauge)
+
+      result = subject.send(expected_call, metrics: {})
+
+      expect(result.success?).to eq true
+      expect(result.error).to eq nil
+    end
+  end
 
   shared_examples_for 'rejects_invalid_appsignal_args' do
     INVALID_PAYLOADS.each do |appsignal_value|
       context "Invalid appsignal top-level args" do
-        let(:appsignal_payload) { appsignal_value }
+        let(:params) do
+          {
+            message: 'this is a message',
+            action: 'some action',
+            metrics: appsignal_value,
+            tenant_id: 'any_tenant',
+            other_data: 'other_data'
+          }
+        end
 
         it 'rejects the payload when invalid appsignal values are given' do
           expect(mock_appsignal).not_to receive(:increment_counter)
           expect(mock_appsignal).not_to receive(:add_distribution_value)
           expect(mock_appsignal).not_to receive(:set_gauge)
 
-          result = subject.send(expected_call, appsignal: appsignal_payload)
+          result = subject.send(expected_call, **params)
 
           expect(result.success?).to eq false
           expect(result.error).to eq 'Invalid appsignal config'
@@ -35,15 +55,71 @@ describe EventTracer::AppsignalLogger do
     end
   end
 
-  shared_examples_for 'skip_processing_empty_appsignal_args' do
-    let(:appsignal_payload) { {} }
+  shared_examples_for "rejects_invalid_metric_args" do
+    INVALID_PAYLOADS.each do |payload|
+      context "Invalid metric values for #{payload} type" do
+        let(:params) do
+          {
+            message: 'this is a message',
+            action: 'some action',
+            metrics: { metric_1: { type: payload } },
+            tenant_id: 'any_tenant',
+            other_data: 'other_data'
+          }
+        end
 
-    it 'skips any metric processing' do
-      expect(mock_appsignal).not_to receive(:increment_counter)
-      expect(mock_appsignal).not_to receive(:add_distribution_value)
-      expect(mock_appsignal).not_to receive(:set_gauge)
+        it 'rejects the payload when invalid appsignal values are given' do
+          expect(mock_appsignal).not_to receive(:increment_counter)
+          expect(mock_appsignal).not_to receive(:add_distribution_value)
+          expect(mock_appsignal).not_to receive(:set_gauge)
 
-      result = subject.send(expected_call, appsignal: appsignal_payload)
+          result = subject.send(expected_call, **params)
+
+          expect(result.success?).to eq false
+          expect(result.error).to eq "Appsignal metric #{payload} invalid"
+        end
+      end
+    end
+
+    context 'with invalid tagging payload' do
+      let(:params) do
+        { metrics: { metric_1: { type: :counter, value: 10 } } }
+      end
+
+      it 'rejects the payload and return failure result' do
+        expect(mock_appsignal).not_to receive(:increment_counter)
+        expect(mock_appsignal).not_to receive(:add_distribution_value)
+        expect(mock_appsignal).not_to receive(:set_gauge)
+
+        result = subject.send(expected_call, **params)
+
+        expect(result.success?).to eq false
+        expect(result.error).to eq "Appsignal payload invalid tag #{allowed_tags}"
+      end
+    end
+  end
+
+  shared_examples_for 'processes_array_inputs' do
+    let(:allowed_tags) { [:tenant_id, :app] }
+    let(:params) do
+      {
+        message: 'this is a message',
+        action: 'some action',
+        metrics: metrics,
+        tenant_id: 'any_tenant',
+        other_data: 'other_data'
+      }
+    end
+    let(:metrics) { [:metric_1, :metric_2, :metric_3] }
+
+   subject { EventTracer::AppsignalLogger.new(mock_appsignal, allowed_tags: allowed_tags) }
+
+    it 'processes each hash keyset as a metric iteration' do
+      expect(mock_appsignal).to receive(:increment_counter).with(:metric_1, 1, {:tenant_id=>"any_tenant"})
+      expect(mock_appsignal).to receive(:increment_counter).with(:metric_2, 1, {:tenant_id=>"any_tenant"})
+      expect(mock_appsignal).to receive(:increment_counter).with(:metric_3, 1, {:tenant_id=>"any_tenant"})
+
+      result = subject.send(expected_call, **params)
 
       expect(result.success?).to eq true
       expect(result.error).to eq nil
@@ -51,73 +127,35 @@ describe EventTracer::AppsignalLogger do
   end
 
   shared_examples_for 'processes_hashed_inputs' do
-    let(:appsignal_payload) do
+    let(:allowed_tags) { [:tenant_id, :app] }
+    let(:params) do
       {
-        increment_counter: {
-          'Counter_1' => { value: 1, tags: { tag_a: 'a', tag_b: 'b' } },
-          'Counter_2' => 2
-        },
-        add_distribution_value: { 'Distribution_1' => 10 },
-        set_gauge: {
-          'Gauge_1' => 100,
-          'Gauge_2' => { value: 200, tags: { region: 'eu' } }
-        }
+        message: 'this is a message',
+        action: 'some action',
+        metrics: metrics,
+        tenant_id: 'any_tenant',
+        other_data: 'other_data'
+      }
+    end
+    let(:metrics) do
+      {
+        metric_1: { type: :gauge, value: 100 },
+        metric_2: { type: :counter, value: 1 },
+        metric_3: { type: :distribution, value: 10 }
       }
     end
 
-    it 'processes each hash keyset as a metric iteration' do
-      expect(mock_appsignal).to receive(:increment_counter).with('Counter_1', 1, tag_a: 'a', tag_b: 'b')
-      expect(mock_appsignal).to receive(:increment_counter).with('Counter_2', 2)
-      expect(mock_appsignal).to receive(:add_distribution_value).with('Distribution_1', 10)
-      expect(mock_appsignal).to receive(:set_gauge).with('Gauge_1', 100)
-      expect(mock_appsignal).to receive(:set_gauge).with('Gauge_2', 200, region: 'eu')
+    subject { EventTracer::AppsignalLogger.new(mock_appsignal, allowed_tags: allowed_tags) }
 
-      result = subject.send(expected_call, appsignal: appsignal_payload)
+    it 'processes each hash keyset as a metric iteration' do
+      expect(mock_appsignal).to receive(:set_gauge).with(:metric_1, 100, { tenant_id: 'any_tenant' })
+      expect(mock_appsignal).to receive(:increment_counter).with(:metric_2, 1, { tenant_id: 'any_tenant' })
+      expect(mock_appsignal).to receive(:add_distribution_value).with(:metric_3, 10, tenant_id: 'any_tenant')
+
+      result = subject.send(expected_call, **params)
 
       expect(result.success?).to eq true
       expect(result.error).to eq nil
-    end
-  end
-
-  shared_examples_for "rejects_invalid_metric_args" do
-    EventTracer::AppsignalLogger::SUPPORTED_METRICS.each do |metric|
-      INVALID_PAYLOADS.each do |payload|
-        context "Invalid metric values for #{metric}: #{payload}" do
-          let(:appsignal_payload) { { metric => payload } }
-
-          it 'rejects the payload when invalid appsignal values are given' do
-            expect(mock_appsignal).not_to receive(:increment_counter)
-            expect(mock_appsignal).not_to receive(:add_distribution_value)
-            expect(mock_appsignal).not_to receive(:set_gauge)
-
-            result = subject.send(expected_call, appsignal: appsignal_payload)
-
-            expect(result.success?).to eq false
-            expect(result.error).to eq "Appsignal metric #{metric} invalid"
-          end
-        end
-      end
-
-      context 'with invalid tagging payload' do
-        let(:appsignal_payload) do
-          {
-            metric => {
-              'Counter_1' => { value: 1, tag: { tag_a: 'a' } }
-            }
-          }
-        end
-
-        it 'rejects the payload and return failure result' do
-          expect(mock_appsignal).not_to receive(:increment_counter)
-          expect(mock_appsignal).not_to receive(:add_distribution_value)
-          expect(mock_appsignal).not_to receive(:set_gauge)
-
-          result = subject.send(expected_call, appsignal: appsignal_payload)
-
-          expect(result.success?).to eq false
-          expect(result.error).to eq "Appsignal payload { Counter_1: {:value=>1, :tag=>{:tag_a=>\"a\"}} } invalid"
-        end
-      end
     end
   end
 
@@ -125,10 +163,11 @@ describe EventTracer::AppsignalLogger do
     context "Log type: #{log_type}" do
       let(:expected_call) { log_type }
 
-      it_behaves_like 'processes_hashed_inputs'
       it_behaves_like 'skip_processing_empty_appsignal_args'
       it_behaves_like 'rejects_invalid_appsignal_args'
       it_behaves_like 'rejects_invalid_metric_args'
+      it_behaves_like 'processes_array_inputs'
+      it_behaves_like 'processes_hashed_inputs'
     end
   end
 

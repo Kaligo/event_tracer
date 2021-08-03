@@ -28,23 +28,31 @@ module EventTracer
 
     LOG_TYPES.each do |log_type|
       define_method log_type do |**args|
-        tags = args.slice(**allowed_tags)
+        metrics = args[:metrics]
 
-        case args[:metrics]
+        return fail_result('Invalid appsignal config') unless valid_appsignal_args?(metrics)
+        return success_result if metrics.empty?
+
+        tags = args.select { |key, _| allowed_tags.include?(key) }
+        return fail_result("Appsignal payload invalid tag #{allowed_tags}") if tags.empty?
+
+        case metrics
         when Array
-          args[:metrics].each do |metric|
+          metrics.each do |metric|
             appsignal.public_send(DEFAULT_METRIC_TYPE, metric, DEFAULT_COUNTER, tags)
           end
         when Hash
-          args[:metrics].each do |metric_name, metric_payload|
+          metrics.each do |metric_name, metric_payload|
+            unless SUPPORTED_METRIC_TYPES.keys.include?(metric_payload[:type])
+              return fail_result("Appsignal metric #{metric_payload[:type]} invalid")
+            end
+
             metric_type = SUPPORTED_METRIC_TYPES[metric_payload[:type].to_sym]
             appsignal.public_send(metric_type, metric_name, metric_payload[:value], tags)
           end
-        else
-          return LogResult.new(false, "Invalid appsignal config")
         end
 
-        LogResult.new(true)
+        success_result
       end
     end
 
@@ -52,5 +60,17 @@ module EventTracer
 
       attr_reader :decoratee, :allowed_tags
       alias_method :appsignal, :decoratee
+
+      def valid_appsignal_args?(metrics)
+        metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
+      end
+
+      def success_result
+        LogResult.new(true)
+      end
+
+      def fail_result(message)
+        LogResult.new(false, message)
+      end
   end
 end
