@@ -1,5 +1,6 @@
 require 'event_tracer/version'
 require 'event_tracer/log_result'
+require 'pry'
 
 module EventTracer
 
@@ -33,7 +34,7 @@ module EventTracer
       loggers.each do |code, logger|
         begin
           if args[:action] && args[:message]
-            result.record code, logger.send(log_type, **filtered_log_arguments(code, args))
+            result.record code, logger.send(log_type, **args)
           else
             result.record code, LogResult.new(false, 'Fields action & message need to be populated')
           end
@@ -53,14 +54,6 @@ module EventTracer
 
       return if selected_codes.empty?
       @loggers.select { |code, _logger| selected_codes.include?(code) }
-    end
-
-    def self.filtered_log_arguments(logger_code, args)
-      blacklisted_logger_keys = registered_logger_codes - [logger_code]
-
-      args.reject do |key, _value|
-        blacklisted_logger_keys.include?(key)
-      end
     end
 
     def self.registered_logger_codes
