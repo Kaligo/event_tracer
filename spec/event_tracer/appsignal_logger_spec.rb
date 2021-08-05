@@ -10,7 +10,7 @@ describe EventTracer::AppsignalLogger do
     :invalid_payload
   ].freeze
 
-  let(:allowed_tags) { [:tenant_id] }
+  let(:allowed_tags) { [] }
   let(:mock_appsignal) { MockAppsignal.new }
 
   subject { EventTracer::AppsignalLogger.new(mock_appsignal, allowed_tags: allowed_tags) }
@@ -95,8 +95,6 @@ describe EventTracer::AppsignalLogger do
     end
     let(:metrics) { [:metric_1, :metric_2, :metric_3] }
 
-   subject { EventTracer::AppsignalLogger.new(mock_appsignal, allowed_tags: allowed_tags) }
-
     it 'processes each hash keyset as a metric iteration' do
       expect(mock_appsignal).to receive(:increment_counter).with(:metric_1, 1, {:tenant_id=>"any_tenant"})
       expect(mock_appsignal).to receive(:increment_counter).with(:metric_2, 1, {:tenant_id=>"any_tenant"})
@@ -127,8 +125,6 @@ describe EventTracer::AppsignalLogger do
         metric_3: { type: :distribution, value: 10 }
       }
     end
-
-    subject { EventTracer::AppsignalLogger.new(mock_appsignal, allowed_tags: allowed_tags) }
 
     it 'processes each hash keyset as a metric iteration' do
       expect(mock_appsignal).to receive(:set_gauge).with(:metric_1, 100, { tenant_id: 'any_tenant' })

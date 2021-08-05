@@ -30,23 +30,34 @@ module EventTracer
 
     LOG_TYPES.each do |log_type|
       define_method log_type do |**args|
+        metrics = args[:metrics]
+
+        return fail_result('Invalid Datadog config') unless valid_args?(metrics)
+        return success_result if metrics.empty?
+
         tags = build_tags(args)
 
-        case args[:metrics]
+        case metrics
         when Array
-          args[:metrics].each do |metric|
-            appsignal.public_send(DEFAULT_METRIC_TYPE, metric, DEFAULT_COUNTER, tags: tags)
+          metrics.each do |metric|
+            datadog.public_send(DEFAULT_METRIC_TYPE, metric, DEFAULT_COUNTER, tags: tags)
           end
         when Hash
-          args[:metrics].each do |metric_name, metric_payload|
-            metric_type = SUPPORTED_METRIC_TYPES[metric_payload[:type].to_sym]
-            appsignal.public_send(metric_type, metric_name, metric_payload[:value], tags: tags)
+          metrics.each do |metric_name, metric_payload|
+            payload_type = metric_payload[:type]
+
+            unless payload_type.is_a?(String) || payload_type.is_a?(Symbol)
+              return fail_result("Datadog metric #{payload_type} invalid")
+            end
+
+            metric_type = SUPPORTED_METRIC_TYPES[payload_type.to_sym]
+            return fail_result("Datadog metric #{payload_type} invalid") unless metric_type
+
+            datadog.public_send(metric_type, metric_name, metric_payload[:value], tags: tags)
           end
-        else
-          return LogResult.new(false, 'Invalid DataDog config')
         end
 
-        LogResult.new(true)
+        success_result
       end
     end
 
@@ -56,7 +67,7 @@ module EventTracer
     alias_method :datadog, :decoratee
 
     def build_tags(args)
-      args.slice(**allowed_tags).map do |tag, value|
+      args.slice(*allowed_tags).map do |tag, value|
         "#{tag}:#{value}"
       end
     end
