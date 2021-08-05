@@ -80,23 +80,6 @@ describe EventTracer::AppsignalLogger do
         end
       end
     end
-
-    context 'with invalid tagging payload' do
-      let(:params) do
-        { metrics: { metric_1: { type: :counter, value: 10 } } }
-      end
-
-      it 'rejects the payload and return failure result' do
-        expect(mock_appsignal).not_to receive(:increment_counter)
-        expect(mock_appsignal).not_to receive(:add_distribution_value)
-        expect(mock_appsignal).not_to receive(:set_gauge)
-
-        result = subject.send(expected_call, **params)
-
-        expect(result.success?).to eq false
-        expect(result.error).to eq "Appsignal payload invalid tag #{allowed_tags}"
-      end
-    end
   end
 
   shared_examples_for 'processes_array_inputs' do
