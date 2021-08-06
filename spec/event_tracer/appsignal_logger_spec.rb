@@ -2,13 +2,18 @@ require 'spec_helper'
 
 describe EventTracer::AppsignalLogger do
 
-  INVALID_PAYLOADS ||= [
+  INVALID_METRIC_TYPES = [
     nil,
     Object.new,
-    'string',
-    10,
-    :invalid_payload
+    10
   ].freeze
+
+  NON_WHITELISTED_METRIC_TYPES = [
+    :invalid_payload,
+    :count,
+    'set',
+    'histogram'
+  ]
 
   let(:allowed_tags) { [] }
   let(:mock_appsignal) { MockAppsignal.new }
@@ -28,55 +33,52 @@ describe EventTracer::AppsignalLogger do
     end
   end
 
-  shared_examples_for 'rejects_invalid_appsignal_args' do
-    INVALID_PAYLOADS.each do |appsignal_value|
-      context "Invalid appsignal top-level args" do
+  shared_examples_for 'skip_logging_non_whitelisted_metric_types' do
+    NON_WHITELISTED_METRIC_TYPES.each do |type|
+      context "non whitelisted metric types" do
         let(:params) do
           {
             message: 'this is a message',
             action: 'some action',
-            metrics: appsignal_value,
+            metrics: { metric_1: { type: type, value: 1 } },
             tenant_id: 'any_tenant',
             other_data: 'other_data'
           }
         end
 
-        it 'rejects the payload when invalid appsignal values are given' do
+        it 'skip perform logging' do
           expect(mock_appsignal).not_to receive(:increment_counter)
           expect(mock_appsignal).not_to receive(:add_distribution_value)
           expect(mock_appsignal).not_to receive(:set_gauge)
 
           result = subject.send(expected_call, **params)
 
-          expect(result.success?).to eq false
-          expect(result.error).to eq 'Invalid appsignal config'
+          expect(result.success?).to eq true
+          expect(result.error).to eq nil
         end
       end
     end
   end
 
-  shared_examples_for "rejects_invalid_metric_args" do
-    INVALID_PAYLOADS.each do |payload|
-      context "Invalid metric values for #{payload} type" do
+  shared_examples_for "rejects_invalid_appsignal_metric_type" do
+    INVALID_METRIC_TYPES.each do |type|
+      context "Invalid metric values for #{type} type" do
         let(:params) do
           {
             message: 'this is a message',
             action: 'some action',
-            metrics: { metric_1: { type: payload } },
+            metrics: { metric_1: { type: type } },
             tenant_id: 'any_tenant',
             other_data: 'other_data'
           }
         end
 
-        it 'rejects the payload when invalid appsignal values are given' do
+        it 'raise error when invalid metric types are given' do
           expect(mock_appsignal).not_to receive(:increment_counter)
           expect(mock_appsignal).not_to receive(:add_distribution_value)
           expect(mock_appsignal).not_to receive(:set_gauge)
 
-          result = subject.send(expected_call, **params)
-
-          expect(result.success?).to eq false
-          expect(result.error).to eq "Appsignal metric #{payload} invalid"
+          expect { subject.send(expected_call, **params) }.to raise_error(NoMethodError)
         end
       end
     end
@@ -143,8 +145,8 @@ describe EventTracer::AppsignalLogger do
       let(:expected_call) { log_type }
 
       it_behaves_like 'skip_processing_empty_appsignal_args'
-      it_behaves_like 'rejects_invalid_appsignal_args'
-      it_behaves_like 'rejects_invalid_metric_args'
+      it_behaves_like 'skip_logging_non_whitelisted_metric_types'
+      it_behaves_like 'rejects_invalid_appsignal_metric_type'
       it_behaves_like 'processes_array_inputs'
       it_behaves_like 'processes_hashed_inputs'
     end

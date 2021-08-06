@@ -44,16 +44,8 @@ module EventTracer
           end
         when Hash
           metrics.each do |metric_name, metric_payload|
-            payload_type = metric_payload[:type]
-
-            unless payload_type.is_a?(String) || payload_type.is_a?(Symbol)
-              return fail_result("Datadog metric #{payload_type} invalid")
-            end
-
-            metric_type = SUPPORTED_METRIC_TYPES[payload_type.to_sym]
-            return fail_result("Datadog metric #{payload_type} invalid") unless metric_type
-
-            datadog.public_send(metric_type, metric_name, metric_payload[:value], tags: tags)
+            metric_type = SUPPORTED_METRIC_TYPES[metric_payload[:type].to_sym]
+            datadog.public_send(metric_type, metric_name, metric_payload[:value], tags: tags) if metric_type
           end
         end
 
