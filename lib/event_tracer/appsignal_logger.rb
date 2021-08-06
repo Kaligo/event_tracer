@@ -33,7 +33,7 @@ module EventTracer
         return fail_result('Invalid appsignal config') unless valid_args?(metrics)
         return success_result if metrics.empty?
 
-        tags = allowed_tags.empty? ? {} : args.slice(*allowed_tags)
+        tags = args.slice(*allowed_tags)
 
         case metrics
         when Array
@@ -63,5 +63,9 @@ module EventTracer
 
       attr_reader :decoratee, :allowed_tags
       alias_method :appsignal, :decoratee
+
+      def valid_args?(metrics)
+        metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
+      end
   end
 end

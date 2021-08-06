@@ -1,6 +1,5 @@
 require 'event_tracer/version'
 require 'event_tracer/log_result'
-require 'pry'
 
 module EventTracer
 

@@ -66,6 +66,10 @@ module EventTracer
     attr_reader :decoratee, :allowed_tags
     alias_method :datadog, :decoratee
 
+    def valid_args?(metrics)
+      metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
+    end
+
     def build_tags(args)
       args.slice(*allowed_tags).map do |tag, value|
         "#{tag}:#{value}"

@@ -16,10 +16,6 @@ module EventTracer
       @delegate_sd_obj = obj
     end
 
-    def valid_args?(metrics)
-      metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
-    end
-
     def success_result
       LogResult.new(true)
     end
