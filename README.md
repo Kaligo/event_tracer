@@ -98,9 +98,9 @@ EventTracer.info(
   action: 'Action',
   message: 'There is an action',
   metrics: [
-    :metric_1,
-    { metric_2: :gauce },
-    { metric_3: { value: 10, type: :distribution } }
+    { metric_1: { type: :counter, value: 12 } },
+    { metric_2: { type: :gauce, value: 1 } },
+    { metric_3: { type: :distribution, value: 10 } }
   ]
 )
 ```
@@ -141,7 +141,7 @@ EventTracer.info(
 
 Datadog via dogstatsd-ruby (version >= 4.8) is currently supported for the following metric functions:
 
-| AppSignal function     | EventTracer key |
+| DataDog function     | EventTracer key |
 --------------------------------------------
 | increment              | counter         |
 | distribution           | distribution    |
@@ -152,7 +152,10 @@ Datadog via dogstatsd-ruby (version >= 4.8) is currently supported for the follo
 
 ```ruby
 EventTracer.info action: 'Action', message: 'Message',
-  metrics: [:counter_1, { counter_2: 2 }]
+  metrics: [
+    { counter_1: { type: :counter, value: 1 } },
+    { counter_2: { type: :counter, value: 2 } }
+]
 # This calls .count on Datadog twice with the 2 sets of arguments
 #  counter_1, 1
 #  counter_2, 2
@@ -184,8 +187,8 @@ EventTracer.info(
   action: 'NewTransaction',
   message: "New transaction created by API",
   metrics: [
-    { distribution_metric_1: 1000 },
-    { distribution_metric_2: 2000 }
+    { type: :counter, value: 1 },
+    { type: :distribution, value: 10 }
   ],
   region: 'eu',
   tenant: 'SomeTenant'

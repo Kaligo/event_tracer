@@ -31,14 +31,10 @@ module EventTracer
       result = Result.new
 
       loggers.each do |code, logger|
-        begin
-          if args[:action] && args[:message]
-            result.record code, logger.send(log_type, **args)
-          else
-            result.record code, LogResult.new(false, 'Fields action & message need to be populated')
-          end
-        rescue Exception => e
-          result.record code, LogResult.new(false, e.message)
+        if args[:action] && args[:message]
+          result.record code, logger.send(log_type, **args)
+        else
+          result.record code, LogResult.new(false, 'Fields action & message need to be populated')
         end
       end
 

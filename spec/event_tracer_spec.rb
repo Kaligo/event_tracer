@@ -64,13 +64,10 @@ describe EventTracer do
     end
 
     it 'marks the logging outcome as false' do
-      result = subject.send(selected_log_method, **args)
-
-      expect(result.records[:base].success?).to eq false
-      expect(result.records[:base].error).to eq 'Runtime error in base logger'
-
-      expect(result.records[:appsignal].success?).to eq true
-      expect(result.records[:appsignal].error).to eq nil
+      expect { subject.send(selected_log_method, **args) }.to raise_error do |error|
+        expect(error).to be_a(RuntimeError)
+        expect(error.message).to eq('Runtime error in base logger')
+      end
     end
   end
 
