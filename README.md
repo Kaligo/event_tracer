@@ -97,11 +97,11 @@ All metrics are sent in `metrics` fields, for example:
 EventTracer.info(
   action: 'Action',
   message: 'There is an action',
-  metrics: [
-    { metric_1: { type: :counter, value: 12 } },
-    { metric_2: { type: :gauce, value: 1 } },
-    { metric_3: { type: :distribution, value: 10 } }
-  ]
+  metrics: {
+    metric_1: { type: :counter, value: 12 },
+    metric_2: { type: :gauce, value: 1 },
+    metric_3: { type: :distribution, value: 10 }
+  }
 )
 ```
 
@@ -152,10 +152,10 @@ Datadog via dogstatsd-ruby (version >= 4.8) is currently supported for the follo
 
 ```ruby
 EventTracer.info action: 'Action', message: 'Message',
-  metrics: [
-    { counter_1: { type: :counter, value: 1 } },
-    { counter_2: { type: :counter, value: 2 } }
-]
+  metrics: {
+    counter_1: { type: :counter, value: 1 },
+    counter_2: { type: :counter, value: 2 }
+  }
 # This calls .count on Datadog twice with the 2 sets of arguments
 #  counter_1, 1
 #  counter_2, 2
@@ -186,10 +186,10 @@ EventTracer.info(
   loggers: %(base appsignal custom_logging_service datadog),
   action: 'NewTransaction',
   message: "New transaction created by API",
-  metrics: [
-    { type: :counter, value: 1 },
-    { type: :distribution, value: 10 }
-  ],
+  metrics: {
+    counter_1: { type: :counter, value: 1 },
+    distribution_2: { type: :distribution, value: 10 }
+  },
   region: 'eu',
   tenant: 'SomeTenant'
 )
