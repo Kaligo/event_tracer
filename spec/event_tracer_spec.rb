@@ -10,7 +10,7 @@ describe EventTracer do
       action: 'Action',
       message: 'Message',
       extra: 'extra',
-      appsignal: { increment_counter: { counter_1: 1 } }
+      metrics: [:metric_1]
     }
   end
 
@@ -30,7 +30,7 @@ describe EventTracer do
   shared_examples_for 'invalid_logger_args_uses_all_loggers' do
     it 'ignores invalid logger args, filters blacklisted args & triggers all messages' do
       expect(mock_logger).to receive(selected_log_method).with expected_log_message
-      expect(mock_appsignal).to receive(:increment_counter).with(:counter_1, 1)
+      expect(mock_appsignal).to receive(:increment_counter).with(:metric_1, 1, {})
 
       result = subject.send(selected_log_method, **args)
 
@@ -64,13 +64,10 @@ describe EventTracer do
     end
 
     it 'marks the logging outcome as false' do
-      result = subject.send(selected_log_method, **args)
-
-      expect(result.records[:base].success?).to eq false
-      expect(result.records[:base].error).to eq 'Runtime error in base logger'
-
-      expect(result.records[:appsignal].success?).to eq true
-      expect(result.records[:appsignal].error).to eq nil
+      expect { subject.send(selected_log_method, **args) }.to raise_error do |error|
+        expect(error).to be_a(RuntimeError)
+        expect(error.message).to eq('Runtime error in base logger')
+      end
     end
   end
 
@@ -86,12 +83,10 @@ describe EventTracer do
       context "Invalid logger codes specified" do
         [
           nil,
-          [],
           :invalid_logger,
           :base,
           :appsignal,
           [:invalid_logger],
-          {},
           Object.new,
           'String',
           1

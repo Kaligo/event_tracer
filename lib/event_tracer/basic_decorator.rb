@@ -16,5 +16,13 @@ module EventTracer
       @delegate_sd_obj = obj
     end
 
+    def success_result
+      LogResult.new(true)
+    end
+
+    def fail_result(message)
+      LogResult.new(false, message)
+    end
+
   end
 end

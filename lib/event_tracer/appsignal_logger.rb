@@ -2,62 +2,62 @@ require_relative '../event_tracer'
 require_relative './basic_decorator'
 
 # NOTES
-# Appsignal interface to send our usual actions 
+# Appsignal interface to send our usual actions
 # BasicDecorator adds a transparent interface on top of the appsignal interface
 #
-# Usage: EventTracer.register :appsignal, EventTracer::AppsignalLogger.new(Appsignal)
-#        appsignal_logger.info appsignal: { increment_counter: { counter_1: 1, counter_2: 2 }, set_gauge: { gauge_1: 1 } }
-#        appsignal_logger.info appsignal: { set_gauge: { gauge_1: { value: 1, tags: { region: 'eu' } } } }
+# Usage: EventTracer.register :appsignal,
+#          EventTracer::AppsignalLogger.new(Appsignal, allowed_tags: ['tag_1', 'tag_2'])
+#
+#        appsignal_logger.info metrics: [:counter_1, :counter_2]
+#        appsignal_logger.info metrics: { counter_1: { type: :counter, value: 1 }, gauce_2: { type: :gauce, value: 10 } }
 module EventTracer
   class AppsignalLogger < BasicDecorator
 
-    SUPPORTED_METRICS ||= %i(increment_counter add_distribution_value set_gauge)
+    SUPPORTED_METRIC_TYPES = {
+      counter: :increment_counter,
+      distribution: :add_distribution_value,
+      gauge: :set_gauge
+    }
+    DEFAULT_METRIC_TYPE = :increment_counter
+    DEFAULT_COUNTER = 1
+
+    def initialize(decoratee, allowed_tags: [])
+      super(decoratee)
+      @allowed_tags = allowed_tags
+    end
 
     LOG_TYPES.each do |log_type|
       define_method log_type do |**args|
-        return LogResult.new(false, "Invalid appsignal config") unless args[:appsignal] && args[:appsignal].is_a?(Hash)
+        metrics = args[:metrics]
 
-        applied_metrics(args[:appsignal]).each do |metric|
-          metric_args = args[:appsignal][metric]
-          return LogResult.new(false, "Appsignal metric #{metric} invalid") unless metric_args && metric_args.is_a?(Hash) 
+        return fail_result('Invalid appsignal config') unless valid_args?(metrics)
+        return success_result if metrics.empty?
 
-          send_metric metric, metric_args
-        rescue InvalidTagError => e
-          return LogResult.new(false, e.message)
+        tags = args.slice(*allowed_tags)
+
+        case metrics
+        when Array
+          metrics.each do |metric|
+            appsignal.public_send(DEFAULT_METRIC_TYPE, metric, DEFAULT_COUNTER, tags)
+          end
+        when Hash
+          metrics.each do |metric_name, metric_payload|
+            metric_type = SUPPORTED_METRIC_TYPES[metric_payload.fetch(:type).to_sym]
+            appsignal.public_send(metric_type, metric_name, metric_payload.fetch(:value), tags) if metric_type
+          end
         end
 
-        LogResult.new(true)
+        success_result
       end
     end
 
     private
 
-      attr_reader :appsignal, :decoratee
+      attr_reader :decoratee, :allowed_tags
       alias_method :appsignal, :decoratee
 
-      def applied_metrics(appsignal_args)
-        appsignal_args.keys.select { |metric| SUPPORTED_METRICS.include?(metric) }
-      end
-
-      def send_metric(metric, payload)
-        payload.each do |increment, attribute|
-          if attribute.is_a?(Hash)
-            begin
-              appsignal.send(
-                metric,
-                increment,
-                attribute.fetch(:value),
-                attribute.fetch(:tags)
-              )
-            rescue KeyError
-              raise InvalidTagError, "Appsignal payload { #{increment}: #{attribute} } invalid"
-            end
-          else
-            appsignal.send(metric, increment, attribute)
-          end
-        end
+      def valid_args?(metrics)
+        metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
       end
   end
-
-  class InvalidTagError < StandardError; end
 end
