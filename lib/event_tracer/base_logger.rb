@@ -20,7 +20,8 @@ module EventTracer
 
       # EventTracer ensures action & message is always populated
       def send_message(log_method, action:, message:, **args)
-        data = args.merge(action: action, message: message).except(:metrics)
+        args.delete(:metrics)
+        data = args.merge(action: action, message: message)
         logger.public_send(log_method, data)
       end
 
