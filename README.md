@@ -173,7 +173,8 @@ Before using this logger, define the app name that will be sent with each log to
 EventTracer::APP_NAME = 'guardhouse'.freeze
 ```
 
-You will also need to define a private method `prepare_payload` in `EventTracer::DynamoDBLogger`
+**Preparing payload (optional)**
+If you have any pre-processing to be done, you can define a private method `prepare_payload` in `EventTracer::DynamoDBLogger`
 
 ```ruby
 module EventTracer
