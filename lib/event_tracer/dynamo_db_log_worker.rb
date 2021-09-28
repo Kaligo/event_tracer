@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
 require 'sidekiq'
-
 module EventTracer
   class DynamoDBLogWorker
     include ::Sidekiq::Worker
 
     sidekiq_options retry: 1, queue: 'low'
 
-    TABLE_NAME = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE')
+    TABLE_NAME = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE', 'logs')
     # See https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/DynamoDB/Client.html#batch_write_item-instance_method
     MAX_DYNAMO_DB_ITEM_PER_REQUEST = 25
 

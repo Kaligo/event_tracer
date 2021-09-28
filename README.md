@@ -164,6 +164,10 @@ EventTracer.info action: 'Action', message: 'Message',
 
 ### DynamoDB integration
 
+**Prerequisites:**
+- Sidekiq
+- AWS DynamoDB SDK
+
 Before using this logger, define the app name that will be sent with each log to DynamoDB:
 ```ruby
 EventTracer::APP_NAME = 'guardhouse'.freeze

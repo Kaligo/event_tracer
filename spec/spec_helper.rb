@@ -3,6 +3,9 @@ require 'event_tracer'
 require 'data_helpers/mock_logger'
 require 'data_helpers/mock_appsignal'
 require 'data_helpers/mock_datadog'
+require 'data_helpers/mock_dynamo_db'
+
+EventTracer::APP_NAME = 'test_app'
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

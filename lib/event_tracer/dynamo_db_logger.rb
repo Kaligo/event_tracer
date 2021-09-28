@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'time'
+
 module EventTracer
   class DynamoDBLogger
     def initialize(buffer = nil)
@@ -29,6 +31,16 @@ module EventTracer
         end
 
         LogResult.new(true)
+      end
+
+      def prepare_payload(log_type, action:, message:, args:)
+        args.merge(
+          timestamp: Time.now.utc.iso8601(6),
+          action: action,
+          message: message,
+          log_type: log_type,
+          app: EventTracer::APP_NAME
+        )
       end
 
   end
