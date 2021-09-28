@@ -11,7 +11,7 @@ module EventTracer
     # Buffer can store maximum 10 items.
     # Bigger size requires more memory to store, so choose a reasonable number
     DEFAULT_BUFFER_SIZE = 10
-    # An item can live in buffer for at most 10s between each `Buffer#add`
+    # An item can live in buffer for at least 10s between each `Buffer#add` if the buffer is not full
     # If there are larger interval between the calls, it can live longer.
     DEFAULT_FLUSH_INTERVAL = 10
 
