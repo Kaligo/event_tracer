@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ['melvrickgoh@hotmail.com']
 
   spec.summary       = 'Thin wrapper for formatted logging/ metric services to be used as a single service'
-  spec.description   = 'Thin wrapper for formatted logging/ metric services to be used as a single service. External service(s) supported: Appsignal'
+  spec.description   = 'Thin wrapper for formatted logging/ metric services to be used as a single service. External service(s) supported: Appsignal, Datadog'
   spec.homepage      = 'https://github.com/melvrickgoh/event_tracer'
   spec.license       = 'MIT'
 
@@ -17,6 +17,8 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = %w[lib/event_tracer lib]
+
+  spec.add_runtime_dependency 'concurrent-ruby'
 
   spec.add_development_dependency "bundler", ">= 2.1.4"
   spec.add_development_dependency "rake", "~> 10.0"
