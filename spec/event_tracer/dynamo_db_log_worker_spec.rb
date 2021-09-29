@@ -62,7 +62,7 @@ describe EventTracer::DynamoDBLogWorker do
     it 'does not log item attributes with nil values' do
       expect(aws_dynamo_client).to receive(:batch_write_item).with(
         request_items: {
-          'logs' => [
+          'test_table' => [
             {
               put_request: {
                 item: {

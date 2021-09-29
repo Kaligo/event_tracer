@@ -4,7 +4,7 @@ require 'time'
 
 module EventTracer
   class DynamoDBLogger
-    def initialize(buffer = nil)
+    def initialize(buffer = Buffer.new(buffer_size: 0))
       @buffer = buffer
     end
 
@@ -21,13 +21,9 @@ module EventTracer
       def save_message(log_type, action:, message:, **args)
         payload = prepare_payload(log_type, action: action, message: message, args: args)
 
-        if buffer
-          unless buffer.add(payload)
-            all_payloads = buffer.flush + [payload]
-            DynamoDBLogWorker.perform_async(all_payloads)
-          end
-        else
-          DynamoDBLogWorker.perform_async(payload)
+        unless buffer.add(payload)
+          all_payloads = buffer.flush + [payload]
+          DynamoDBLogWorker.perform_async(all_payloads)
         end
 
         LogResult.new(true)

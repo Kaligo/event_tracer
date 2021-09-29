@@ -168,9 +168,10 @@ EventTracer.info action: 'Action', message: 'Message',
 - Sidekiq
 - AWS DynamoDB SDK
 
-Before using this logger, define the app name that will be sent with each log to DynamoDB:
+Before using this logger, you need to define:
 ```ruby
-EventTracer::APP_NAME = 'guardhouse'.freeze
+EventTracer::APP_NAME = 'guardhouse'.freeze # app name that will be sent with each log to DynamoDB
+EventTracer::DYNAMO_DB_TABLE_NAME = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE', 'logs') # send logs to this DynamoDB table
 ```
 
 **Preparing payload (optional)**
@@ -230,13 +231,18 @@ end
 
 **Buffer for network/IO optimization (optional)**
 
-For this logger, a thread-safe buffer has been implemented to allow batch sending of logs. To utilise the buffer, define a buffer with an optional keyword argument `buffer_size`, as such:
+For this logger, a thread-safe buffer has been implemented to allow batch sending of logs. To utilise the buffer, define a buffer with optional keyword arguments `buffer_size` and `flush_interval`, as such:
 ```ruby
 buffer = EventTracer::Buffer.new(
-  buffer_size: ENV.fetch('EVENT_TRACER_DEFAULT_BUFFER_SIZE', EventTracer::Buffer::DEFAULT_BUFFER_SIZE).to_i
+  buffer_size: ENV.fetch('EVENT_TRACER_BUFFER_SIZE', EventTracer::Buffer::DEFAULT_BUFFER_SIZE).to_i,
+  flush_interval: ENV.fetch('EVENT_TRACER_FLUSH_INTERVAL', EventTracer::Buffer::DEFAULT_FLUSH_INTERVAL).to_i
 )
 EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(buffer)
 ```
+
+`buffer_size` refers to the number of items that can be stored in the buffer before all items are flushed
+`flush_interval` defines the maximum time between adding the first and penultimate items in the buffer (in seconds). However, note that the buffer is only flushed when the next call is made, so the items could potentially remain in buffer for a very long time if calls are sparse
+
 
 If you prefer not to use the buffer, simply initialize without an argument:
 ```ruby

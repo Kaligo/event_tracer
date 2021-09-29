@@ -1,6 +1,4 @@
-# This is a mock DynamoDBClient for testing purposes.
-
-class DynamoDBClient; end
+# This is a mock aws-sdk-dynamodb module for testing purposes.
 
 module Aws
   module DynamoDB
