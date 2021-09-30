@@ -19,6 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = %w[lib/event_tracer lib]
 
   spec.add_runtime_dependency 'concurrent-ruby'
+  spec.add_runtime_dependency 'dry-configurable'
 
   spec.add_development_dependency "bundler", ">= 2.1.4"
   spec.add_development_dependency "rake", "~> 10.0"

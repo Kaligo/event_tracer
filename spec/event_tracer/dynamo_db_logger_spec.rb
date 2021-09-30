@@ -28,7 +28,7 @@ describe EventTracer::DynamoDBLogger do
       action: 'Testing',
       log_type: :info,
       timestamp: '2020-02-09T12:34:56.000000Z',
-      app: EventTracer::APP_NAME
+      app: DynamoDBConfig.config.app_name
     }]
   end
 
