@@ -25,7 +25,7 @@ module EventTracer
           { put_request: { item: clean_empty_values(item) } }
         end
 
-        DynamoDBClient.call.batch_write_item(
+        EventTracer::DynamoDBClient.call.batch_write_item(
           request_items: { EventTracer::Config.config.dynamo_db_table_name => data }
         )
 

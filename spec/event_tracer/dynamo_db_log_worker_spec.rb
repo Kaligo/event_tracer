@@ -5,7 +5,7 @@ describe EventTracer::DynamoDBLogWorker do
   let(:aws_dynamo_client) { double }
 
   before do
-    allow(DynamoDBClient).to receive(:call) { aws_dynamo_client }
+    allow(EventTracer::DynamoDBClient).to receive(:call) { aws_dynamo_client }
     allow(aws_dynamo_client).to receive(:batch_write_item) { batch_write_item.is_a?(Proc) ? batch_write_item.call('request_items') : batch_write_item }
   end
 
