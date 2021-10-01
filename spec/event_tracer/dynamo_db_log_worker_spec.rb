@@ -2,11 +2,14 @@ require 'spec_helper'
 
 describe EventTracer::DynamoDBLogWorker do
   let(:details) { { 'action' => 'Test', 'message' => 'Test worker' } }
-  let(:aws_dynamo_client) { double }
+  let(:aws_dynamo_client) do
+    Aws::DynamoDB::Client.new(stub_responses: {
+      batch_write_item: batch_write_item
+    })
+  end
 
   before do
     allow(EventTracer::DynamoDBClient).to receive(:call) { aws_dynamo_client }
-    allow(aws_dynamo_client).to receive(:batch_write_item) { batch_write_item.is_a?(Proc) ? batch_write_item.call('request_items') : batch_write_item }
   end
 
   subject { described_class.new }
