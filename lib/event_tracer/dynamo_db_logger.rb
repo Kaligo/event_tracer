@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'time'
-require_relative '../config/dynamo_db'
+require_relative 'dynamo_db_client'
 
 module EventTracer
   class DynamoDBLogger
@@ -36,7 +36,7 @@ module EventTracer
           action: action,
           message: message,
           log_type: log_type,
-          app: DynamoDBConfig.config.app_name
+          app: EventTracer::Config.config.app_name
         )
       end
 

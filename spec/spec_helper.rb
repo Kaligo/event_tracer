@@ -4,8 +4,10 @@ require 'data_helpers/mock_logger'
 require 'data_helpers/mock_appsignal'
 require 'data_helpers/mock_datadog'
 
-DynamoDBConfig.config.app_name = 'test_app'
-DynamoDBConfig.config.table_name = 'test_table'
+EventTracer::Config.configure do |config|
+  config.app_name = 'test_app'
+  config.dynamo_db_table_name = 'test_table'
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

@@ -170,8 +170,10 @@ EventTracer.info action: 'Action', message: 'Message',
 
 Before using this logger, you need to define:
 ```ruby
-DynamoDBConfig.config.app_name = 'guardhouse'.freeze # app name that will be sent with each log to DynamoDB
-DynamoDBConfig.config.table_name = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE', 'logs') # send logs to this DynamoDB table
+EventTracer::Config.configure do |config|
+  config.app_name = 'guardhouse'.freeze # app name that will be sent with each log to DynamoDB
+  config.dynamo_db_table_name = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE', 'logs') # send logs to this DynamoDB table
+end
 ```
 
 **Preparing payload (optional)**

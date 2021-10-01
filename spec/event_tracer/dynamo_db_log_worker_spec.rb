@@ -39,7 +39,7 @@ describe EventTracer::DynamoDBLogWorker do
       expect(EventTracer).to receive(:error).with(
         loggers: %i(base), action: 'DynamoDBLogWorker',
         error: 'Aws::DynamoDB::Errors::ServiceError', message: error_message,
-        app: DynamoDBConfig.config.app_name
+        app: EventTracer::Config.config.app_name
       )
 
       subject.perform(details)

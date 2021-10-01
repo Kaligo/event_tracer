@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../config/dynamo_db'
+require_relative 'dynamo_db_client'
 
 begin
   require 'sidekiq'
@@ -26,14 +26,14 @@ module EventTracer
         end
 
         DynamoDBClient.call.batch_write_item(
-          request_items: { DynamoDBConfig.config.table_name => data }
+          request_items: { EventTracer::Config.config.dynamo_db_table_name => data }
         )
 
       rescue Aws::DynamoDB::Errors::ServiceError => e
         EventTracer.error(
           loggers: %i(base),
           action: 'DynamoDBLogWorker',
-          app: DynamoDBConfig.config.app_name,
+          app: EventTracer::Config.config.app_name,
           error: e.class.name,
           message: e.message
         )
