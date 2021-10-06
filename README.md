@@ -177,59 +177,14 @@ end
 ```
 
 **Preparing payload (optional)**
-If you have any pre-processing to be done, you can define a private method `prepare_payload` in `EventTracer::DynamoDBLogger`
-
+If you have any pre-processing of the payload to be done, you can supply an instance of a log processor as an argument, e.g.
 ```ruby
-module EventTracer
-  class DynamoDBLogger
+log_processor = YourLogProcessor.new # defaults to EventTracer::DynamoDBDefaultProcessor.new
+EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(log_processor: log_processor)
 
-    private
-
-      def prepare_payload(log_type, action:, message:, args:)
-        ...
-
-        args.merge(
-          event: event,
-          timestamp: Time.now.utc.iso8601(6),
-          action: action,
-          message: message,
-          log_type: log_type,
-          app: 'mission_control'
-        )
-      end
-
-  end
-end
 ```
 
-Alternatively, you can choose to override the `save_message` method:
-
-```ruby
-module EventTracer
-  class DynamoDBLogger
-
-    private
-
-      def save_message(log_type, action:, message:, **args)
-        ...
-
-        payload = args.merge(
-          event: event,
-          timestamp: Time.now.utc.iso8601(6),
-          action: action,
-          message: message,
-          log_type: log_type,
-          app: 'mission_control'
-        )
-
-        DynamoDBLogWorker.perform_async(payload)
-        LogResult.new(true)
-      end
-
-  end
-end
-```
-
+This processor needs to accept the same arguments as you would normally pass to DynamoDBLogger, namely: `log_type`, `action:`, `message:`, `args:` and return a `Hash`
 
 **Buffer for network/IO optimization (optional)**
 
@@ -239,7 +194,7 @@ buffer = EventTracer::Buffer.new(
   buffer_size: ENV.fetch('EVENT_TRACER_BUFFER_SIZE', EventTracer::Buffer::DEFAULT_BUFFER_SIZE).to_i,
   flush_interval: ENV.fetch('EVENT_TRACER_FLUSH_INTERVAL', EventTracer::Buffer::DEFAULT_FLUSH_INTERVAL).to_i
 )
-EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(buffer)
+EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(buffer: buffer)
 ```
 
 `buffer_size` refers to the number of items that can be stored in the buffer before all items are flushed

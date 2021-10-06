@@ -5,8 +5,9 @@ require_relative 'dynamo_db_client'
 
 module EventTracer
   class DynamoDBLogger
-    def initialize(buffer = Buffer.new(buffer_size: 0))
+    def initialize(buffer: Buffer.new(buffer_size: 0), log_processor: EventTracer::DynamoDBDefaultProcessor.new)
       @buffer = buffer
+      @log_processor = log_processor
     end
 
     EventTracer::LOG_TYPES.each do |log_type|
@@ -17,10 +18,10 @@ module EventTracer
 
     private
 
-      attr_reader :buffer
+      attr_reader :buffer, :log_processor
 
       def save_message(log_type, action:, message:, **args)
-        payload = prepare_payload(log_type, action: action, message: message, args: args)
+        payload = log_processor.call(log_type, action: action, message: message, args: args)
 
         unless buffer.add(payload)
           all_payloads = buffer.flush + [payload]
@@ -28,16 +29,6 @@ module EventTracer
         end
 
         LogResult.new(true)
-      end
-
-      def prepare_payload(log_type, action:, message:, args:)
-        args.merge(
-          timestamp: Time.now.utc.iso8601(6),
-          action: action,
-          message: message,
-          log_type: log_type,
-          app: EventTracer::Config.config.app_name
-        )
       end
 
   end
