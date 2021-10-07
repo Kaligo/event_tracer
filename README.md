@@ -6,7 +6,7 @@ EventTracer is a thin wrapper to aggregate multiple logging services as a single
 
 This gem currently supports only:
 
-1. Base logger (payload in JSON format): Can be initialised around the default loggers like thos of Rails or Hanami
+1. Base logger (payload in JSON format): Can be initialised around the default loggers like those of Rails or Hanami
 2. Appsignal: Empty wrapper around the custom metric distributions
     1. increment_counter
     2. add_distribution_value
@@ -17,8 +17,7 @@ This gem currently supports only:
     3. set
     4. gauge
     5. histogram
-
-No dependencies are declared for this as the
+4. DynamoDB
 
 ## Installation
 
@@ -57,6 +56,7 @@ Each initialised logger is then registered to `EventTracer`.
 EventTracer.register :base, base_logger
 EventTracer.register :appsignal, appsignal_logger
 EventTracer.register :datadog, datadog_logger
+EventTracer.register :dynamo_db, dynamo_db_logger
 ```
 
 As this is a registry, you can set it up with your own implemented wrapper as long as it responds to the following `LOG_TYPES` methods: `info, warn, error`
@@ -159,6 +159,51 @@ EventTracer.info action: 'Action', message: 'Message',
 # This calls .count on Datadog twice with the 2 sets of arguments
 #  counter_1, 1
 #  counter_2, 2
+```
+
+
+### DynamoDB integration
+
+**Prerequisites:**
+- Sidekiq
+- AWS DynamoDB SDK
+
+Before using this logger, you need to define:
+```ruby
+EventTracer::Config.configure do |config|
+  config.app_name = 'guardhouse'.freeze # app name that will be sent with each log to DynamoDB
+  config.dynamo_db_table_name = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE', 'logs') # send logs to this DynamoDB table
+end
+```
+
+**Preparing payload (optional)**
+If you have any pre-processing of the payload to be done, you can supply an instance of a log processor as an argument, e.g.
+```ruby
+log_processor = YourLogProcessor.new # defaults to EventTracer::DynamoDBDefaultProcessor.new
+EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(log_processor: log_processor)
+
+```
+
+This processor needs to accept the same arguments as you would normally pass to DynamoDBLogger, namely: `log_type`, `action:`, `message:`, `args:` and return a `Hash`
+
+**Buffer for network/IO optimization (optional)**
+
+For this logger, a thread-safe buffer has been implemented to allow batch sending of logs. To utilise the buffer, define a buffer with optional keyword arguments `buffer_size` and `flush_interval`, as such:
+```ruby
+buffer = EventTracer::Buffer.new(
+  buffer_size: ENV.fetch('EVENT_TRACER_BUFFER_SIZE', EventTracer::Buffer::DEFAULT_BUFFER_SIZE).to_i,
+  flush_interval: ENV.fetch('EVENT_TRACER_FLUSH_INTERVAL', EventTracer::Buffer::DEFAULT_FLUSH_INTERVAL).to_i
+)
+EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(buffer: buffer)
+```
+
+`buffer_size` refers to the number of items that can be stored in the buffer before all items are flushed
+`flush_interval` defines the maximum time between adding the first and penultimate items in the buffer (in seconds). However, note that the buffer is only flushed when the next call is made, so the items could potentially remain in buffer for a very long time if calls are sparse
+
+
+If you prefer not to use the buffer, simply initialize without an argument:
+```ruby
+EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new
 ```
 
 ### Results
