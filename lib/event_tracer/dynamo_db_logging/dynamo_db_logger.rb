@@ -3,6 +3,7 @@
 require 'time'
 require_relative 'dynamo_db_client'
 require_relative 'dynamo_db_log_worker'
+require_relative 'dynamo_db_default_processor'
 
 module EventTracer
   class DynamoDBLogger
