@@ -70,4 +70,4 @@ module EventTracer
 end
 
 project_root = File.dirname(File.absolute_path(__FILE__))
-Dir.glob("#{project_root}/event_tracer/*") {|file| require file}
+Dir.glob("#{project_root}/event_tracer/*.rb") {|file| require file}
