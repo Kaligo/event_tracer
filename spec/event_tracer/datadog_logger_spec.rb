@@ -115,6 +115,25 @@ describe EventTracer::DatadogLogger do
       expect(result.success?).to eq true
       expect(result.error).to eq nil
     end
+
+    context 'array-ed hash inputs' do
+      let(:metrics) do
+        [
+          { metric_1: { type: :counter, value: 1} },
+          { metric_1: { type: :distribution, value: 100 } }
+        ]
+      end
+
+      it 'processes each metric as a hashed input' do
+        expect(mock_datadog).to receive(:count).with(:metric_1, 1, tags: expected_tags)
+        expect(mock_datadog).to receive(:distribution).with(:metric_1, 100, tags: expected_tags)
+
+        result = subject.send(expected_call, **params)
+
+        expect(result.success?).to eq true
+        expect(result.error).to eq nil
+      end
+    end
   end
 
   shared_examples_for 'processes_hashed_inputs' do

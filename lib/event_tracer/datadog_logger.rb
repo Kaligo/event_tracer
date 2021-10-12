@@ -37,17 +37,7 @@ module EventTracer
 
         tags = build_tags(args)
 
-        case metrics
-        when Array
-          metrics.each do |metric|
-            datadog.public_send(DEFAULT_METRIC_TYPE, metric, DEFAULT_COUNTER, tags: tags)
-          end
-        when Hash
-          metrics.each do |metric_name, metric_payload|
-            metric_type = SUPPORTED_METRIC_TYPES[metric_payload.fetch(:type).to_sym]
-            datadog.public_send(metric_type, metric_name, metric_payload.fetch(:value), tags: tags) if metric_type
-          end
-        end
+        send_metrice(metrics, tags)
 
         success_result
       end
@@ -57,6 +47,22 @@ module EventTracer
 
     attr_reader :decoratee, :allowed_tags
     alias_method :datadog, :decoratee
+
+    def send_metrice(metrice, tags)
+      case metrice
+      when String, Symbol
+        datadog.public_send(DEFAULT_METRIC_TYPE, metrice, DEFAULT_COUNTER, tags: tags)
+      when Array
+        metrice.each do |metric|
+          send_metrice(metric, tags)
+        end
+      when Hash
+        metrice.each do |metric_name, metric_payload|
+          metric_type = SUPPORTED_METRIC_TYPES[metric_payload.fetch(:type).to_sym]
+          datadog.public_send(metric_type, metric_name, metric_payload.fetch(:value), tags: tags) if metric_type
+        end
+      end
+    end
 
     def valid_args?(metrics)
       metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
