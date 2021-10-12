@@ -3,7 +3,7 @@ require 'event_tracer'
 require 'data_helpers/mock_logger'
 require 'data_helpers/mock_appsignal'
 require 'data_helpers/mock_datadog'
-require 'event_tracer/dynamo_db_logging/dynamo_db_logger'
+require 'event_tracer/dynamo_db/logger'
 
 EventTracer::Config.configure do |config|
   config.app_name = 'test_app'

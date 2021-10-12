@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe EventTracer::DynamoDBLogWorker do
+describe EventTracer::DynamoDB::Worker do
   let(:details) { { 'action' => 'Test', 'message' => 'Test worker' } }
   let(:aws_dynamo_client) do
     Aws::DynamoDB::Client.new(stub_responses: {
@@ -9,7 +9,7 @@ describe EventTracer::DynamoDBLogWorker do
   end
 
   before do
-    allow(EventTracer::DynamoDBClient).to receive(:call) { aws_dynamo_client }
+    allow(EventTracer::DynamoDB::Client).to receive(:call) { aws_dynamo_client }
   end
 
   subject { described_class.new }
@@ -40,7 +40,7 @@ describe EventTracer::DynamoDBLogWorker do
 
     it 'logs to base using EventTracer' do
       expect(EventTracer).to receive(:error).with(
-        loggers: %i(base), action: 'DynamoDBLogWorker',
+        loggers: %i(base), action: 'DynamoDBWorker',
         error: 'Aws::DynamoDB::Errors::ServiceError', message: error_message,
         app: EventTracer::Config.config.app_name
       )

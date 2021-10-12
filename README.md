@@ -170,7 +170,7 @@ EventTracer.info action: 'Action', message: 'Message',
 
 Before using this logger, you need to require the logger and define some config:
 ```ruby
-require 'event_tracer/dynamo_db_logging/dynamo_db_logger'
+require 'event_tracer/dynamo_db/logger'
 
 EventTracer::Config.configure do |config|
   config.app_name = 'guardhouse'.freeze # app name that will be sent with each log to DynamoDB
@@ -186,7 +186,7 @@ EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(log_processor: l
 
 ```
 
-This processor needs to accept the same arguments as you would normally pass to DynamoDBLogger, namely: `log_type`, `action:`, `message:`, `args:` and return a `Hash`
+This processor needs to respond to `.call` and accept the same arguments you would normally pass to DynamoDBLogger, namely: `log_type`, `action:`, `message:`, `args:` and return a `Hash`
 
 **Buffer for network/IO optimization (optional)**
 

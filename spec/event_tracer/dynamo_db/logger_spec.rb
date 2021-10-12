@@ -1,10 +1,10 @@
 require 'timecop'
 
-describe EventTracer::DynamoDBLogger do
+describe EventTracer::DynamoDB::Logger do
   let(:log_method) { :info }
 
   before do
-    expect(EventTracer::DynamoDBLogWorker).to receive(:perform_async).with(expected_log_worker_payload)
+    expect(EventTracer::DynamoDB::Worker).to receive(:perform_async).with(expected_log_worker_payload)
     Timecop.freeze('2020-02-09T12:34:56Z')
   end
 
