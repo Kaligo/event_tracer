@@ -181,8 +181,8 @@ end
 **Preparing payload (optional)**
 If you have any pre-processing of the payload to be done, you can supply an instance of a log processor as an argument, e.g.
 ```ruby
-log_processor = YourLogProcessor.new # defaults to EventTracer::DynamoDBDefaultProcessor.new
-EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(log_processor: log_processor)
+log_processor = YourLogProcessor.new # defaults to EventTracer::DynamoDB::DefaultProcessor.new
+EventTracer.register :dynamodb, EventTracer::DynamoDB::Logger.new(log_processor: log_processor) # note the difference in namespace from the rest of the loggers
 
 ```
 
