@@ -168,8 +168,10 @@ EventTracer.info action: 'Action', message: 'Message',
 - Sidekiq
 - AWS DynamoDB SDK
 
-Before using this logger, you need to define:
+Before using this logger, you need to require the logger and define some config:
 ```ruby
+require 'event_tracer/dynamo_db/logger'
+
 EventTracer::Config.configure do |config|
   config.app_name = 'guardhouse'.freeze # app name that will be sent with each log to DynamoDB
   config.dynamo_db_table_name = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE', 'logs') # send logs to this DynamoDB table
@@ -179,12 +181,12 @@ end
 **Preparing payload (optional)**
 If you have any pre-processing of the payload to be done, you can supply an instance of a log processor as an argument, e.g.
 ```ruby
-log_processor = YourLogProcessor.new # defaults to EventTracer::DynamoDBDefaultProcessor.new
-EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(log_processor: log_processor)
+log_processor = YourLogProcessor.new # defaults to EventTracer::DynamoDB::DefaultProcessor.new
+EventTracer.register :dynamodb, EventTracer::DynamoDB::Logger.new(log_processor: log_processor) # note the difference in namespace from the rest of the loggers
 
 ```
 
-This processor needs to accept the same arguments as you would normally pass to DynamoDBLogger, namely: `log_type`, `action:`, `message:`, `args:` and return a `Hash`
+This processor needs to respond to `.call` and accept the same arguments you would normally pass to DynamoDBLogger, namely: `log_type`, `action:`, `message:`, `args:` and return a `Hash`
 
 **Buffer for network/IO optimization (optional)**
 
