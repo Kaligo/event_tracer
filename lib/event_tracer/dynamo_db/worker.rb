@@ -20,14 +20,19 @@ module EventTracer
       # See https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/DynamoDB/Client.html#batch_write_item-instance_method
       MAX_DYNAMO_DB_ITEM_PER_REQUEST = 25
 
+      def initialize(client = nil)
+        @config = EventTracer::Config.config
+        @client = client || @config.dynamo_db_client || Client.call
+      end
+
       def perform(items)
         wrap(items).each_slice(MAX_DYNAMO_DB_ITEM_PER_REQUEST) do |batch|
           data = batch.map do |item|
             { put_request: { item: clean_empty_values(item) } }
           end
 
-          Client.call.batch_write_item(
-            request_items: { EventTracer::Config.config.dynamo_db_table_name => data }
+          client.batch_write_item(
+            request_items: { config.dynamo_db_table_name => data }
           )
 
         rescue Aws::DynamoDB::Errors::ServiceError => e
@@ -42,6 +47,8 @@ module EventTracer
       end
 
       private
+
+        attr_reader :client, :config
 
         def wrap(items)
           # NOTE: This allows us to handle either buffered or unbuffered payloads

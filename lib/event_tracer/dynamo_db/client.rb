@@ -1,9 +1,13 @@
-# TODO: move this into logger class in v1.0
 module EventTracer
   module DynamoDB
     class Client
-      def self.call
-        EventTracer::Config.dynamo_db_client || Aws::DynamoDB::Client.new
+      class << self
+        extend Gem::Deprecate
+
+        def call
+          Aws::DynamoDB::Client.new
+        end
+        deprecate :call, 'EventTracer::Config.config.dynamo_db_client', 2021, 12
       end
     end
   end

@@ -8,11 +8,7 @@ describe EventTracer::DynamoDB::Worker do
     })
   end
 
-  before do
-    allow(EventTracer::DynamoDB::Client).to receive(:call) { aws_dynamo_client }
-  end
-
-  subject { described_class.new }
+  subject { described_class.new(aws_dynamo_client) }
 
   context 'when input is a single item' do
     let(:batch_write_item) { true }

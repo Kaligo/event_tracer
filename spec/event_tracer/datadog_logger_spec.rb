@@ -2,13 +2,13 @@ require 'spec_helper'
 
 describe EventTracer::DatadogLogger do
 
-  INVALID_METRIC_TYPES = [
+  self::INVALID_METRIC_TYPES = [
     nil,
     Object.new,
     10
   ].freeze
 
-  NON_WHITELISTED_METRIC_TYPES = [
+  self::NON_WHITELISTED_METRIC_TYPES = [
     :invalid_payload,
     :add_distribution_value,
     'increment_counter',
@@ -37,7 +37,7 @@ describe EventTracer::DatadogLogger do
   end
 
   shared_examples_for "skip_logging_non_whitelisted_metric_types" do
-    NON_WHITELISTED_METRIC_TYPES.each do |type|
+    self::NON_WHITELISTED_METRIC_TYPES.each do |type|
       context "Invalid metric values for #{type} type" do
         let(:params) do
           {
@@ -66,7 +66,7 @@ describe EventTracer::DatadogLogger do
   end
 
   shared_examples_for 'rejects_invalid_datadog_metric_types' do
-    INVALID_METRIC_TYPES.each do |type|
+    self::INVALID_METRIC_TYPES.each do |type|
       context "Invalid appsignal top-level args" do
         let(:params) do
           {
