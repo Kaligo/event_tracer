@@ -175,6 +175,7 @@ require 'event_tracer/dynamo_db/logger'
 EventTracer::Config.configure do |config|
   config.app_name = 'guardhouse'.freeze # app name that will be sent with each log to DynamoDB
   config.dynamo_db_table_name = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE', 'logs') # send logs to this DynamoDB table
+  config.dynamo_db_client = Aws::DynamoDB::Client.new # this value is set by default
 end
 ```
 

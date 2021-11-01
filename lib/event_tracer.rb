@@ -3,7 +3,7 @@ require 'event_tracer/log_result'
 
 module EventTracer
 
-  LOG_TYPES ||= %i(info warn error)
+  LOG_TYPES = %i(info warn error)
 
   @loggers = {}
 

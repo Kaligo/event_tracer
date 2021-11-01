@@ -2,13 +2,13 @@ require 'spec_helper'
 
 describe EventTracer::AppsignalLogger do
 
-  INVALID_METRIC_TYPES = [
+  self::INVALID_METRIC_TYPES = [
     nil,
     Object.new,
     10
   ].freeze
 
-  NON_WHITELISTED_METRIC_TYPES = [
+  self::NON_WHITELISTED_METRIC_TYPES = [
     :invalid_payload,
     :count,
     'set',
@@ -34,7 +34,7 @@ describe EventTracer::AppsignalLogger do
   end
 
   shared_examples_for 'skip_logging_non_whitelisted_metric_types' do
-    NON_WHITELISTED_METRIC_TYPES.each do |type|
+    self::NON_WHITELISTED_METRIC_TYPES.each do |type|
       context "non whitelisted metric types" do
         let(:params) do
           {
@@ -61,7 +61,7 @@ describe EventTracer::AppsignalLogger do
   end
 
   shared_examples_for "rejects_invalid_appsignal_metric_type" do
-    INVALID_METRIC_TYPES.each do |type|
+    self::INVALID_METRIC_TYPES.each do |type|
       context "Invalid metric values for #{type} type" do
         let(:params) do
           {
