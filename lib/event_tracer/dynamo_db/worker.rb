@@ -15,7 +15,7 @@ module EventTracer
     class Worker
       include ::Sidekiq::Worker
 
-      sidekiq_options retry: 1, queue: 'low'
+      sidekiq_options retry: 1, queue: EventTracer::Config.config.dynamo_db_queue_name
 
       # See https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/DynamoDB/Client.html#batch_write_item-instance_method
       MAX_DYNAMO_DB_ITEM_PER_REQUEST = 25
