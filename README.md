@@ -170,13 +170,14 @@ EventTracer.info action: 'Action', message: 'Message',
 
 Before using this logger, you need to require the logger and define some config:
 ```ruby
-require 'event_tracer/dynamo_db/logger'
-
 EventTracer::Config.configure do |config|
   config.app_name = 'guardhouse'.freeze # app name that will be sent with each log to DynamoDB
   config.dynamo_db_table_name = ENV.fetch('AWS_DYNAMODB_LOGGING_TABLE', 'logs') # send logs to this DynamoDB table
   config.dynamo_db_client = Aws::DynamoDB::Client.new # this value is set by default
+  config.dynamo_db_queue_name = 'low' # defaults to 'low'
 end
+
+require "event_tracer/dynamo_db/logger" # NOTE: needs to be required after configuring EventTracer
 ```
 
 **Preparing payload (optional)**
