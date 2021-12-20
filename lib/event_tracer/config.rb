@@ -9,5 +9,6 @@ module EventTracer
     # TODO: switch to namespace in v1.0
     setting :dynamo_db_table_name, default: 'logs'
     setting :dynamo_db_client
+    setting :dynamo_db_queue_name, default: 'low'
   end
 end
