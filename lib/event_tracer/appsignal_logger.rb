@@ -1,4 +1,3 @@
-require_relative '../event_tracer'
 require_relative './basic_decorator'
 
 # NOTES
@@ -55,7 +54,6 @@ module EventTracer
 
     private
 
-      attr_reader :decoratee
       alias_method :appsignal, :decoratee
 
       def valid_args?(metrics)

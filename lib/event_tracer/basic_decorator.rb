@@ -24,5 +24,8 @@ module EventTracer
       LogResult.new(false, message)
     end
 
+    private
+
+    attr_reader :decoratee
   end
 end

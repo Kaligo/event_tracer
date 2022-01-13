@@ -1,4 +1,3 @@
-require_relative '../event_tracer'
 require_relative './basic_decorator'
 require 'json'
 
@@ -15,7 +14,6 @@ module EventTracer
 
     private
 
-      attr_reader :logger, :decoratee
       alias_method :logger, :decoratee
 
       # EventTracer ensures action & message is always populated
