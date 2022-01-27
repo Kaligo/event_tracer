@@ -21,9 +21,11 @@ module EventTracer
     DEFAULT_METRIC_TYPE = :increment_counter
     DEFAULT_COUNTER = 1
 
+    attr_reader :allowed_tags
+
     def initialize(decoratee, allowed_tags: [])
       super(decoratee)
-      @allowed_tags = allowed_tags
+      @allowed_tags = allowed_tags.freeze
     end
 
     LOG_TYPES.each do |log_type|
@@ -53,7 +55,7 @@ module EventTracer
 
     private
 
-      attr_reader :decoratee, :allowed_tags
+      attr_reader :decoratee
       alias_method :appsignal, :decoratee
 
       def valid_args?(metrics)

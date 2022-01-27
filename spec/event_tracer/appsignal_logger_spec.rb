@@ -18,7 +18,7 @@ describe EventTracer::AppsignalLogger do
   let(:allowed_tags) { [] }
   let(:mock_appsignal) { MockAppsignal.new }
 
-  subject { EventTracer::AppsignalLogger.new(mock_appsignal, allowed_tags: allowed_tags) }
+  subject { described_class.new(mock_appsignal, allowed_tags: allowed_tags) }
 
   shared_examples_for 'skip_processing_empty_appsignal_args' do
     it 'skips any metric processing' do
@@ -152,4 +152,12 @@ describe EventTracer::AppsignalLogger do
     end
   end
 
+  describe '#allowed_tags' do
+    let(:allowed_tags) { ['random'] }
+    let(:logger) { described_class.new(mock_appsignal, allowed_tags: allowed_tags) }
+    subject { logger.allowed_tags }
+
+    it { is_expected.to eq allowed_tags }
+    it { is_expected.to be_frozen }
+  end
 end

@@ -18,8 +18,7 @@ describe EventTracer::DatadogLogger do
   let(:allowed_tags) { [] }
   let(:mock_datadog) { MockDatadog.new }
 
-
-  subject { EventTracer::DatadogLogger.new(mock_datadog, allowed_tags: allowed_tags) }
+  subject { described_class.new(mock_datadog, allowed_tags: allowed_tags) }
 
   shared_examples_for 'skip_processing_empty_datadog_args' do
     it 'skips any metric processing' do
@@ -181,5 +180,14 @@ describe EventTracer::DatadogLogger do
       it_behaves_like 'processes_array_inputs'
       it_behaves_like 'processes_hashed_inputs'
     end
+  end
+
+  describe '#allowed_tags' do
+    let(:allowed_tags) { ['random'] }
+    let(:logger) { described_class.new(mock_datadog, allowed_tags: allowed_tags) }
+    subject { logger.allowed_tags }
+
+    it { is_expected.to eq allowed_tags }
+    it { is_expected.to be_frozen }
   end
 end
