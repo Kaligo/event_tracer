@@ -53,9 +53,11 @@ module EventTracer
       end
     end
 
+    attr_reader :allowed_tags
+
     private
 
-    attr_reader :decoratee, :allowed_tags
+    attr_reader :decoratee
     alias_method :datadog, :decoratee
 
     def valid_args?(metrics)
