@@ -1,4 +1,3 @@
-require_relative '../event_tracer'
 require_relative './basic_decorator'
 # NOTES
 # Datadog interface to send our usual actions
@@ -57,7 +56,6 @@ module EventTracer
 
     private
 
-    attr_reader :decoratee
     alias_method :datadog, :decoratee
 
     def valid_args?(metrics)
