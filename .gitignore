@@ -9,6 +9,7 @@
 /vendor/bundle/
 *.gem
 Gemfile.lock
+Gemfile.*.lock
 .tool-versions
 
 # rspec failure tracking

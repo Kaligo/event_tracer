@@ -131,7 +131,7 @@ describe EventTracer::AppsignalLogger do
     it 'processes each hash keyset as a metric iteration' do
       expect(mock_appsignal).to receive(:set_gauge).with(:metric_1, 100, { tenant_id: 'any_tenant' })
       expect(mock_appsignal).to receive(:increment_counter).with(:metric_2, 1, { tenant_id: 'any_tenant' })
-      expect(mock_appsignal).to receive(:add_distribution_value).with(:metric_3, 10, tenant_id: 'any_tenant')
+      expect(mock_appsignal).to receive(:add_distribution_value).with(:metric_3, 10, { tenant_id: 'any_tenant' })
 
       result = subject.send(expected_call, **params)
 
