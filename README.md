@@ -59,7 +59,8 @@ EventTracer.register :datadog, datadog_logger
 EventTracer.register :dynamo_db, dynamo_db_logger
 ```
 
-As this is a registry, you can set it up with your own implemented wrapper as long as it responds to the following `LOG_TYPES` methods: `info, warn, error`
+As this is a registry, you can set it up with your own implemented wrapper as long as
+it responds to the following `LOG_TYPES` methods: `debug, info, warn, error`
 
 ### Service Interfaces
 
