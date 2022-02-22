@@ -204,6 +204,7 @@ EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new(buffer: buffer)
 `buffer_size` refers to the number of items that can be stored in the buffer before all items are flushed
 `flush_interval` defines the maximum time between adding the first and penultimate items in the buffer (in seconds). However, note that the buffer is only flushed when the next call is made, so the items could potentially remain in buffer for a very long time if calls are sparse
 
+NOTE: Hanami apps use `shotgun` gem to reload the app during development. This means that every HTTP request is a new fork with a new (empty) buffer, and the buffered items will simply disappear on the next request. To properly run manual tests in development, comment out `shotgun` and `bundle install` again.
 
 If you prefer not to use the buffer, simply initialize without an argument:
 ```ruby
