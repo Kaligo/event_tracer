@@ -45,8 +45,9 @@ module EventTracer
           end
         when Hash
           metrics.each do |metric_name, metric_payload|
-            metric_type = SUPPORTED_METRIC_TYPES[metric_payload.fetch(:type).to_sym]
-            datadog.public_send(metric_type, metric_name, metric_payload.fetch(:value), tags: tags) if metric_type
+            payload = metric_payload.transform_keys(&:to_sym)
+            metric_type = SUPPORTED_METRIC_TYPES[payload.fetch(:type).to_sym]
+            datadog.public_send(metric_type, metric_name, payload.fetch(:value), tags: tags) if metric_type
           end
         end
 

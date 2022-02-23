@@ -123,7 +123,7 @@ describe EventTracer::AppsignalLogger do
     let(:metrics) do
       {
         metric_1: { type: :gauge, value: 100 },
-        metric_2: { type: :counter, value: 1 },
+        metric_2: { 'type' => :counter, 'value' => 1 },
         metric_3: { type: :distribution, value: 10 }
       }
     end

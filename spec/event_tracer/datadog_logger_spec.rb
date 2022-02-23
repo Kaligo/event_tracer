@@ -131,7 +131,7 @@ describe EventTracer::DatadogLogger do
     let(:metrics) do
       {
         metric_1: { type: :gauge, value: 100 },
-        metric_2: { type: :counter, value: 1 },
+        metric_2: { 'type' => :counter, 'value' => 1 },
         metric_3: { type: :distribution, value: 10 },
         metric_4: { type: :set, value: 150 },
         metric_5: { type: :set, value: 50 }
