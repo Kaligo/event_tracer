@@ -12,6 +12,7 @@ module EventTracer
       setting :dynamo_db_table_name, default: 'logs'
       setting :dynamo_db_client
       setting :dynamo_db_queue_name, default: 'low'
+      setting :error_handler, default: ->(error, _payloads) { raise error }
     else
       setting :app_name, 'app_name'
 
@@ -19,6 +20,7 @@ module EventTracer
       setting :dynamo_db_table_name, 'logs'
       setting :dynamo_db_client
       setting :dynamo_db_queue_name, 'low'
+      setting :error_handler, ->(error, _payloads) { raise error }
     end
   end
 end

@@ -228,6 +228,18 @@ result.records[:base].success? => true
 result.records[:base].error => nil
 ```
 
+Also, specifically for the `BufferedLogger`, `StandardError` is directly rescued and you can provide a proc or instance of a class to handle the error and payloads. You can configure it as such:
+
+```
+EventTracer::Config.configure do |config|
+  config.error_handler = EventTracerExtension::ErrorHandler.new
+end
+```
+
+The error handler will receive two positional arguments, i.e. `EventTracerExtension::ErrorHandler.new.call(error, payloads)`:
+`error` - the rescued error
+`payloads` - the original payloads that were logged
+
 ### Summary
 
 In all the generated interface for `EventTracer` logging could look something like this

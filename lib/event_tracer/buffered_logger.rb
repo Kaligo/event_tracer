@@ -46,6 +46,8 @@ module EventTracer
       )
 
       worker.perform_async(filtered_payloads) if filtered_payloads.any?
+    rescue StandardError => e
+      EventTracer::Config.config.error_handler.call(e, payloads)
     end
 
     def filter_invalid_data(payloads)
