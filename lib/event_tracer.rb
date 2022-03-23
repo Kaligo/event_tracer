@@ -32,7 +32,15 @@ module EventTracer
 
       loggers.each do |code, logger|
         if args[:action] && args[:message]
-          result.record code, logger.send(log_type, **args)
+          begin
+            result.record code, logger.send(log_type, **args)
+          rescue EventTracer::ErrorWithPayload => error
+            EventTracer::Config.config.error_handler.call(error, error.payload)
+            result.record code, LogResult.new(false, error.message)
+          rescue StandardError => error
+            EventTracer::Config.config.error_handler.call(error, args)
+            result.record code, LogResult.new(false, error.message)
+          end
         else
           result.record code, LogResult.new(false, 'Fields action & message need to be populated')
         end

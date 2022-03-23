@@ -55,4 +55,24 @@ describe EventTracer::BufferedLogger do
 
     it { is_expected.to be_success }
   end
+
+  context 'when buffer is full and there is sidekiq error' do
+    let(:all_payloads) { [other_payload, payload] }
+    let(:other_payload) { { 'action' => 'action', 'app' => 'guardhouse', 'metrics' => [:metric_1] } }
+
+    before do
+      expect(buffer).to receive(:add).with(payload).and_return(false)
+      expect(buffer).to receive(:flush).and_return([other_payload])
+      expect(worker).to receive(:perform_async)
+        .with(all_payloads).and_raise(ArgumentError)
+    end
+
+    it 'should raise error' do
+      expect { subject }.to raise_error { |error|
+        expect(error).to be_a EventTracer::ErrorWithPayload
+        expect(error.cause).to be_a ArgumentError
+        expect(error.payload).to eq(all_payloads)
+      }
+    end
+  end
 end
