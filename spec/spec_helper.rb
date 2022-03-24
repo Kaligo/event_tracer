@@ -7,10 +7,6 @@ require 'event_tracer/dynamo_db/logger'
 require 'dry/configurable/test_interface'
 
 EventTracer::Config.enable_test_interface
-EventTracer::Config.configure do |config|
-  config.app_name = 'test_app'
-  config.dynamo_db_table_name = 'test_table'
-end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -19,4 +15,6 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.order = :random
 end
