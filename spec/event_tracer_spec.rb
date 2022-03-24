@@ -32,7 +32,7 @@ describe EventTracer do
       expect(mock_logger).to receive(selected_log_method).with expected_log_message
       expect(mock_appsignal).to receive(:increment_counter).with(:metric_1, 1, {})
 
-      result = subject.send(selected_log_method, **args)
+      result = subject.public_send(selected_log_method, **args)
 
       aggregate_failures do
         expect(result.records[:base].success?).to eq true
@@ -49,7 +49,7 @@ describe EventTracer do
       expect(mock_logger).to receive(selected_log_method).with expected_log_message
       expect(mock_appsignal).not_to receive(:increment_counter)
 
-      result = subject.send(selected_log_method, **args)
+      result = subject.public_send(selected_log_method, **args)
 
       expect(result.records[:base].success?).to eq true
       expect(result.records[:base].error).to eq nil
@@ -87,11 +87,11 @@ describe EventTracer do
 
       context 'Logger fails when error occurs' do
         before do
-          allow(mock_logger).to receive(selected_log_method).and_raise(RuntimeError.new('Runtime error in base logger'))
+          expect(mock_logger).to receive(selected_log_method).and_raise(RuntimeError.new('Runtime error in base logger'))
         end
 
         it 'raises the original error' do
-          expect { subject.send(selected_log_method, **args) }.to raise_error do |error|
+          expect { subject.public_send(selected_log_method, **args) }.to raise_error do |error|
             expect(error).to be_a(RuntimeError)
             expect(error.message).to eq('Runtime error in base logger')
           end
@@ -99,7 +99,6 @@ describe EventTracer do
 
         context 'when there is a configured error handler' do
           before do
-            EventTracer::Config.enable_test_interface
             EventTracer::Config.config.error_handler = ->(error, payload) { puts error, payload }
           end
 
@@ -108,7 +107,7 @@ describe EventTracer do
           end
 
           it 'handles the original error gracefully and sets log failure result' do
-            result = subject.send(selected_log_method, **args)
+            result = subject.public_send(selected_log_method, **args)
             expect(result.records[:base].success?).to eq false
             expect(result.records[:base].error).to eq 'Runtime error in base logger'
 
