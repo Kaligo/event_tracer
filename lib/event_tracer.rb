@@ -35,7 +35,7 @@ module EventTracer
           begin
             result.record code, logger.send(log_type, **args)
           rescue EventTracer::ErrorWithPayload => error
-            EventTracer::Config.config.error_handler.call(error, error.payload)
+            EventTracer::Config.config.error_handler.call(error.cause || error, error.payload)
             result.record code, LogResult.new(false, error.message)
           rescue StandardError => error
             EventTracer::Config.config.error_handler.call(error, args)

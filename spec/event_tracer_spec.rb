@@ -58,21 +58,6 @@ describe EventTracer do
     end
   end
 
-  shared_examples_for 'error_in_logger_service_fails_gracefully' do
-    before do
-      allow(mock_logger).to receive(selected_log_method).and_raise(RuntimeError.new('Runtime error in base logger'))
-    end
-
-    it 'marks the logging outcome as false' do
-      result = subject.send(selected_log_method, **args)
-      expect(result.records[:base].success?).to eq false
-      expect(result.records[:base].error).to eq 'Runtime error in base logger'
-
-      expect(result.records[:appsignal].success?).to eq true
-      expect(result.records[:appsignal].error).to eq nil
-    end
-  end
-
   EventTracer::LOG_TYPES.each do |log_type|
     context "Logging for #{log_type}" do
       let(:selected_log_method) { log_type }
@@ -100,8 +85,37 @@ describe EventTracer do
         end
       end
 
-      context 'Logger fails gracefully when exception occurs' do
-        it_behaves_like 'error_in_logger_service_fails_gracefully'
+      context 'Logger fails when error occurs' do
+        before do
+          allow(mock_logger).to receive(selected_log_method).and_raise(RuntimeError.new('Runtime error in base logger'))
+        end
+
+        it 'raises the original error' do
+          expect { subject.send(selected_log_method, **args) }.to raise_error do |error|
+            expect(error).to be_a(RuntimeError)
+            expect(error.message).to eq('Runtime error in base logger')
+          end
+        end
+
+        context 'when there is a configured error handler' do
+          before do
+            EventTracer::Config.enable_test_interface
+            EventTracer::Config.config.error_handler = ->(error, payload) { puts error, payload }
+          end
+
+          after do
+            EventTracer::Config.reset_config
+          end
+
+          it 'handles the original error gracefully and sets log failure result' do
+            result = subject.send(selected_log_method, **args)
+            expect(result.records[:base].success?).to eq false
+            expect(result.records[:base].error).to eq 'Runtime error in base logger'
+
+            expect(result.records[:appsignal].success?).to eq true
+            expect(result.records[:appsignal].error).to eq nil
+          end
+        end
       end
     end
   end

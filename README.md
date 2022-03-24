@@ -214,21 +214,7 @@ EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new
 
 ### Results
 
-Logging is a side task that should never fail. So we capture any exceptions so that any issue does not impact the flow of your application.
-
-The `EventTracer` returns a `EventTracer::Result` object that logs the success/ failure of the outcome of your execution in case you'd like to investigate why your services ain't working.
-
-Each log result is mapped to the code of the activated logger
-
-**Sample**
-
-```ruby
-result = EventTracer.info action: '123', message: '' # <EventTracer::Result @records={:base=>#<struct EventTracer::LogResult :success?=true, error=nil>}>
-result.records[:base].success? => true
-result.records[:base].error => nil
-```
-
-Also, you can provide a proc or instance of a class to handle the error and payloads. You can configure it as such:
+By default, EventTracer passes through errors that are raised by the loggers. However, you can provide a proc or instance of a class to handle the error and payload. You can configure it as such:
 
 ```
 EventTracer::Config.configure do |config|
@@ -239,6 +225,18 @@ end
 The error handler will receive two positional arguments, i.e. `EventTracerExtension::ErrorHandler.new.call(error, payload)`:
 `error` - the rescued error
 `payload` - the original arguments or payloads that were logged
+
+In addition, it returns a `EventTracer::Result` object that logs the success/failure of the outcome of your execution in case you'd like to investigate why your services ain't working. NOTE: if an error is raised, no results are returned unless you handle the error above.
+
+Each log result is mapped to the code of the activated logger.
+
+**Sample**
+
+```ruby
+result = EventTracer.info action: '123', message: '' # <EventTracer::Result @records={:base=>#<struct EventTracer::LogResult :success?=true, error=nil>}>
+result.records[:base].success? => true
+result.records[:base].error => nil
+```
 
 ### Summary
 
