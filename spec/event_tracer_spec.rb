@@ -32,7 +32,7 @@ describe EventTracer do
       expect(mock_logger).to receive(selected_log_method).with expected_log_message
       expect(mock_appsignal).to receive(:increment_counter).with(:metric_1, 1, {})
 
-      result = subject.send(selected_log_method, **args)
+      result = subject.public_send(selected_log_method, **args)
 
       aggregate_failures do
         expect(result.records[:base].success?).to eq true
@@ -49,25 +49,12 @@ describe EventTracer do
       expect(mock_logger).to receive(selected_log_method).with expected_log_message
       expect(mock_appsignal).not_to receive(:increment_counter)
 
-      result = subject.send(selected_log_method, **args)
+      result = subject.public_send(selected_log_method, **args)
 
       expect(result.records[:base].success?).to eq true
       expect(result.records[:base].error).to eq nil
 
       expect(result.records[:appsignal]).to eq nil
-    end
-  end
-
-  shared_examples_for 'error_in_logger_service_fails_gracefully' do
-    before do
-      allow(mock_logger).to receive(selected_log_method).and_raise(RuntimeError.new('Runtime error in base logger'))
-    end
-
-    it 'marks the logging outcome as false' do
-      expect { subject.send(selected_log_method, **args) }.to raise_error do |error|
-        expect(error).to be_a(RuntimeError)
-        expect(error.message).to eq('Runtime error in base logger')
-      end
     end
   end
 
@@ -98,8 +85,36 @@ describe EventTracer do
         end
       end
 
-      context 'Logger fails gracefully when exception occurs' do
-        it_behaves_like 'error_in_logger_service_fails_gracefully'
+      context 'Logger fails when error occurs' do
+        before do
+          expect(mock_logger).to receive(selected_log_method).and_raise(RuntimeError.new('Runtime error in base logger'))
+        end
+
+        it 'raises the original error' do
+          expect { subject.public_send(selected_log_method, **args) }.to raise_error do |error|
+            expect(error).to be_a(RuntimeError)
+            expect(error.message).to eq('Runtime error in base logger')
+          end
+        end
+
+        context 'when there is a configured error handler' do
+          before do
+            EventTracer::Config.config.error_handler = ->(error, payload) { puts error, payload }
+          end
+
+          after do
+            EventTracer::Config.reset_config
+          end
+
+          it 'handles the original error gracefully and sets log failure result' do
+            result = subject.public_send(selected_log_method, **args)
+            expect(result.records[:base].success?).to eq false
+            expect(result.records[:base].error).to eq 'Runtime error in base logger'
+
+            expect(result.records[:appsignal].success?).to eq true
+            expect(result.records[:appsignal].error).to eq nil
+          end
+        end
       end
     end
   end

@@ -1,6 +1,17 @@
 require 'spec_helper'
 
 describe EventTracer::DynamoDB::Worker do
+  before do
+    EventTracer::Config.configure do |config|
+      config.app_name = 'test_app'
+      config.dynamo_db_table_name = 'test_table'
+    end
+  end
+
+  after do
+    EventTracer::Config.reset_config
+  end
+
   let(:details) { { 'action' => 'Test', 'message' => 'Test worker' } }
   let(:aws_dynamo_client) do
     Aws::DynamoDB::Client.new(stub_responses: {
