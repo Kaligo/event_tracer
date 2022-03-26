@@ -8,6 +8,10 @@ describe EventTracer::DynamoDB::Worker do
     end
   end
 
+  after do
+    EventTracer::Config.reset_config
+  end
+
   let(:details) { { 'action' => 'Test', 'message' => 'Test worker' } }
   let(:aws_dynamo_client) do
     Aws::DynamoDB::Client.new(stub_responses: {
