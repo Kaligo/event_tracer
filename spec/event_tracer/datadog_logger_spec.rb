@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'climate_control'
 
 describe EventTracer::DatadogLogger do
 
@@ -102,17 +103,19 @@ describe EventTracer::DatadogLogger do
       }
     end
     let(:metrics) { [:metric_1, :metric_2, :metric_3] }
-    let(:expected_tags) { ['tenant_id:any_tenant'] }
+    let(:expected_tags) { ['tenant_id:any_tenant', 'environment:development'] }
 
     it 'processes each hash keyset as a metric iteration' do
-      expect(mock_datadog).to receive(:count).with(:metric_1, 1, tags: expected_tags)
-      expect(mock_datadog).to receive(:count).with(:metric_2, 1, tags: expected_tags)
-      expect(mock_datadog).to receive(:count).with(:metric_3, 1, tags: expected_tags)
+      ClimateControl.modify APP_ENV: 'development' do
+        expect(mock_datadog).to receive(:count).with(:metric_1, 1, tags: expected_tags)
+        expect(mock_datadog).to receive(:count).with(:metric_2, 1, tags: expected_tags)
+        expect(mock_datadog).to receive(:count).with(:metric_3, 1, tags: expected_tags)
 
-      result = subject.send(expected_call, **params)
+        result = subject.send(expected_call, **params)
 
-      expect(result.success?).to eq true
-      expect(result.error).to eq nil
+        expect(result.success?).to eq true
+        expect(result.error).to eq nil
+      end
     end
   end
 
@@ -137,25 +140,10 @@ describe EventTracer::DatadogLogger do
         metric_5: { type: :set, value: 50 }
       }
     end
-    let(:expected_tags) { ['tenant_id:any_tenant', 'app:vma'] }
+    let(:expected_tags) { ['tenant_id:any_tenant', 'app:vma', 'environment:development'] }
 
     it 'processes each hash keyset as a metric iteration' do
-      expect(mock_datadog).to receive(:gauge).with(:metric_1, 100, tags: expected_tags)
-      expect(mock_datadog).to receive(:count).with(:metric_2, 1, tags: expected_tags)
-      expect(mock_datadog).to receive(:distribution).with(:metric_3, 10, tags: expected_tags)
-      expect(mock_datadog).to receive(:set).with(:metric_4, 150, tags: expected_tags)
-      expect(mock_datadog).to receive(:set).with(:metric_5, 50, tags: expected_tags)
-
-      result = subject.send(expected_call, **params)
-
-      expect(result.success?).to eq true
-      expect(result.error).to eq nil
-    end
-
-    context 'when tags is empty' do
-      let(:allowed_tags) { [] }
-      let(:expected_tags) { [] }
-      it 'processes each hash keyset as a metric iteration' do
+      ClimateControl.modify APP_ENV: 'development' do
         expect(mock_datadog).to receive(:gauge).with(:metric_1, 100, tags: expected_tags)
         expect(mock_datadog).to receive(:count).with(:metric_2, 1, tags: expected_tags)
         expect(mock_datadog).to receive(:distribution).with(:metric_3, 10, tags: expected_tags)
@@ -166,6 +154,25 @@ describe EventTracer::DatadogLogger do
 
         expect(result.success?).to eq true
         expect(result.error).to eq nil
+      end
+    end
+
+    context 'when tags is empty' do
+      let(:allowed_tags) { [] }
+      let(:expected_tags) { ['environment:development'] }
+      it 'processes each hash keyset as a metric iteration' do
+        ClimateControl.modify APP_ENV: 'development' do
+          expect(mock_datadog).to receive(:gauge).with(:metric_1, 100, tags: expected_tags)
+          expect(mock_datadog).to receive(:count).with(:metric_2, 1, tags: expected_tags)
+          expect(mock_datadog).to receive(:distribution).with(:metric_3, 10, tags: expected_tags)
+          expect(mock_datadog).to receive(:set).with(:metric_4, 150, tags: expected_tags)
+          expect(mock_datadog).to receive(:set).with(:metric_5, 50, tags: expected_tags)
+
+          result = subject.send(expected_call, **params)
+
+          expect(result.success?).to eq true
+          expect(result.error).to eq nil
+        end
       end
     end
   end

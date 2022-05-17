@@ -18,15 +18,17 @@ module EventTracer
       gauge: :gauge,
       set: :set,
       histogram: :histogram
-    }
+    }.freeze
     DEFAULT_METRIC_TYPE = :count
     DEFAULT_COUNTER = 1
+    DEFAULT_TAGS = [:environment].freeze # These should be appended by the Logger itself
 
-    attr_reader :allowed_tags
+    attr_reader :allowed_tags, :default_tags
 
     def initialize(decoratee, allowed_tags: [])
       super(decoratee)
       @allowed_tags = allowed_tags.freeze
+      @default_tags = DEFAULT_TAGS
     end
 
     LOG_TYPES.each do |log_type|
@@ -36,6 +38,7 @@ module EventTracer
         return fail_result('Invalid Datadog config') unless valid_args?(metrics)
         return success_result if metrics.empty?
 
+        append_default_tags(args)
         tags = build_tags(args)
 
         case metrics
@@ -64,8 +67,19 @@ module EventTracer
     end
 
     def build_tags(args)
-      args.slice(*allowed_tags).map do |tag, value|
+      args.slice(*(allowed_tags + default_tags)).map do |tag, value|
         "#{tag}:#{value}"
+      end
+    end
+
+    def environment
+      ENV['APP_ENV']
+    end
+
+    def append_default_tags(args)
+      # Make sure each default tag is appended
+      @default_tags.each do |tag|
+        args[tag] = send(tag)
       end
     end
   end

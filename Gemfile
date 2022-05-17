@@ -7,6 +7,7 @@ gemspec
 
 group :test do
   gem 'aws-sdk-dynamodb'
+  gem 'climate_control'
   gem 'nokogiri'
   gem 'sidekiq'
   gem 'timecop'
