@@ -16,9 +16,10 @@ describe EventTracer::DatadogLogger do
   ]
 
   let(:allowed_tags) { [] }
+  let(:default_tags) { { environment: 'development' } }
   let(:mock_datadog) { MockDatadog.new }
 
-  subject { described_class.new(mock_datadog, allowed_tags: allowed_tags) }
+  subject { described_class.new(mock_datadog, allowed_tags: allowed_tags, default_tags: default_tags) }
 
   shared_examples_for 'skip_processing_empty_datadog_args' do
     it 'skips any metric processing' do
@@ -102,7 +103,7 @@ describe EventTracer::DatadogLogger do
       }
     end
     let(:metrics) { [:metric_1, :metric_2, :metric_3] }
-    let(:expected_tags) { ['tenant_id:any_tenant'] }
+    let(:expected_tags) { ['environment:development', 'tenant_id:any_tenant'] }
 
     it 'processes each hash keyset as a metric iteration' do
       expect(mock_datadog).to receive(:count).with(:metric_1, 1, tags: expected_tags)
@@ -137,7 +138,7 @@ describe EventTracer::DatadogLogger do
         metric_5: { type: :set, value: 50 }
       }
     end
-    let(:expected_tags) { ['tenant_id:any_tenant', 'app:vma'] }
+    let(:expected_tags) { ['environment:development', 'tenant_id:any_tenant', 'app:vma'] }
 
     it 'processes each hash keyset as a metric iteration' do
       expect(mock_datadog).to receive(:gauge).with(:metric_1, 100, tags: expected_tags)
@@ -154,7 +155,7 @@ describe EventTracer::DatadogLogger do
 
     context 'when tags is empty' do
       let(:allowed_tags) { [] }
-      let(:expected_tags) { [] }
+      let(:expected_tags) { ['environment:development'] }
       it 'processes each hash keyset as a metric iteration' do
         expect(mock_datadog).to receive(:gauge).with(:metric_1, 100, tags: expected_tags)
         expect(mock_datadog).to receive(:count).with(:metric_2, 1, tags: expected_tags)

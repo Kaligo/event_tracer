@@ -60,6 +60,8 @@ module EventTracer
 
     alias_method :datadog, :decoratee
 
+    attr_reader :default_tags
+
     def valid_args?(metrics)
       metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
     end
