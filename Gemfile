@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-git_source(:github) {|repo_name| "https://github.com/melvrickgoh/event_tracer" }
+git_source(:ascenda_private) { |repo_name| ENV['BUNDLE_GITHUB__HTTPS'] ? "https://github.com/#{repo_name}.git" : "git@github.com:#{repo_name}.git" }
 
 # Specify your gem's dependencies in event_tracer.gemspec
 gemspec
@@ -10,4 +10,6 @@ group :test do
   gem 'nokogiri'
   gem 'sidekiq'
   gem 'timecop'
+  gem 'prometheus-client'
+  gem 'pry-byebug'
 end

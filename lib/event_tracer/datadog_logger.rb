@@ -67,7 +67,7 @@ module EventTracer
     end
 
     def build_tags(args)
-      @default_tags.merge(args.slice(*allowed_tags)).map do |tag, value|
+      default_tags.merge(args.slice(*allowed_tags)).map do |tag, value|
         "#{tag}:#{value}"
       end
     end
