@@ -46,6 +46,11 @@ Each individual logger should receive the relevant logging services to wrap onto
 ```ruby
 base_logger = EventTracer::BaseLogger.new(your_logger)
 appsignal_logger = EventTracer::AppsignalLogger.new(Appsignal)
+datadog_logger = EventTracer::DatadogLogger.new(
+  statsd,
+  allowed_tags: [], # only the tags defined here are allowed to be sent to Datadog
+  default_tags: {}  # the tags and values defined here are always sent to Datadog
+)
 ```
 
 **2. Registering the wrapped loggers**
@@ -120,7 +125,7 @@ Currently, tags apply for all metrics, we don't have support individual tagging 
 Appsignal >= 2.5 is currently supported for the following metric functions:
 
 | AppSignal function     | EventTracer key |
---------------------------------------------
+|------------------------|-----------------|
 | increment_counter      | counter         |
 | add_distribution_value | distribution    |
 | set_gauge              | gauce           |
@@ -142,8 +147,8 @@ EventTracer.info(
 
 Datadog via dogstatsd-ruby (version >= 4.8) is currently supported for the following metric functions:
 
-| DataDog function     | EventTracer key |
---------------------------------------------
+| DataDog function       | EventTracer key |
+|------------------------|-----------------|
 | increment              | counter         |
 | distribution           | distribution    |
 | gauge                  | gauge           |
