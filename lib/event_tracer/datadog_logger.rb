@@ -18,15 +18,16 @@ module EventTracer
       gauge: :gauge,
       set: :set,
       histogram: :histogram
-    }
+    }.freeze
     DEFAULT_METRIC_TYPE = :count
     DEFAULT_COUNTER = 1
 
     attr_reader :allowed_tags
 
-    def initialize(decoratee, allowed_tags: [])
+    def initialize(decoratee, allowed_tags: [], default_tags: {})
       super(decoratee)
       @allowed_tags = allowed_tags.freeze
+      @default_tags = default_tags.freeze
     end
 
     LOG_TYPES.each do |log_type|
@@ -59,12 +60,14 @@ module EventTracer
 
     alias_method :datadog, :decoratee
 
+    attr_reader :default_tags
+
     def valid_args?(metrics)
       metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
     end
 
     def build_tags(args)
-      args.slice(*allowed_tags).map do |tag, value|
+      @default_tags.merge(args.slice(*allowed_tags)).map do |tag, value|
         "#{tag}:#{value}"
       end
     end
