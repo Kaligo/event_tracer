@@ -171,6 +171,44 @@ describe EventTracer::DatadogLogger do
     end
   end
 
+  shared_examples_for 'no_default_tags' do
+    let(:allowed_tags) { [:tenant_id, :app] }
+    let(:params) do
+      {
+        message: 'this is a message',
+        action: 'some action',
+        metrics: metrics,
+        tenant_id: 'any_tenant',
+        other_data: 'other_data',
+        app: 'vma'
+      }
+    end
+    let(:metrics) do
+      {
+        metric_1: { type: :gauge, value: 100 },
+        metric_2: { 'type' => :counter, 'value' => 1 },
+        metric_3: { type: :distribution, value: 10 },
+        metric_4: { type: :set, value: 150 },
+        metric_5: { type: :set, value: 50 }
+      }
+    end
+    let(:expected_tags) { ['tenant_id:any_tenant', 'app:vma'] }
+    it 'sends tags correctly' do
+      subj = described_class.new(mock_datadog, allowed_tags: allowed_tags)
+
+      expect(mock_datadog).to receive(:gauge).with(:metric_1, 100, tags: expected_tags)
+      expect(mock_datadog).to receive(:count).with(:metric_2, 1, tags: expected_tags)
+      expect(mock_datadog).to receive(:distribution).with(:metric_3, 10, tags: expected_tags)
+      expect(mock_datadog).to receive(:set).with(:metric_4, 150, tags: expected_tags)
+      expect(mock_datadog).to receive(:set).with(:metric_5, 50, tags: expected_tags)
+
+      result = subj.send(expected_call, **params)
+
+      expect(result.success?).to eq true
+      expect(result.error).to eq nil
+    end
+  end
+
   EventTracer::LOG_TYPES.each do |log_type|
     context "Log type: #{log_type}" do
       let(:expected_call) { log_type }
@@ -180,6 +218,7 @@ describe EventTracer::DatadogLogger do
       it_behaves_like 'rejects_invalid_datadog_metric_types'
       it_behaves_like 'processes_array_inputs'
       it_behaves_like 'processes_hashed_inputs'
+      it_behaves_like 'no_default_tags'
     end
   end
 
