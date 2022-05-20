@@ -18,6 +18,9 @@ This gem currently supports only:
     4. gauge
     5. histogram
 4. DynamoDB
+5. Prometheus
+    1. counter
+    2. gauge
 
 ## Installation
 
@@ -216,6 +219,40 @@ If you prefer not to use the buffer, simply initialize without an argument:
 ```ruby
 EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new
 ```
+
+### Prometheus integration
+
+- For Ruby app, Prometheus is supported by [Prometheus Client](https://github.com/prometheus/client_ruby). Checkout its [Rack middleware](https://github.com/prometheus/client_ruby#rack-middleware) to setup `/metrics` endpoint.
+- For Sidekiq, [Sidekiq Prometheus](https://github.com/Kaligo/sidekiq-prometheus) provides the same interface with the above gem. Checkout its [Usage](https://github.com/Kaligo/sidekiq-prometheus#usage) to setup for Sidekiq.
+
+In `initializers/event_tracer.rb`, you can register the logger like this
+```ruby
+registry = if Sidekiq.server?
+             SidekiqPrometheus.registry
+           else
+             Prometheus.registry
+           end
+           
+logger = EventTracer::Prometheus.new(registry, allowed_tags: [], default_tags: {})
+EventTracer.register :prometheus, logger
+```
+
+Then you can track your metrics using the same interface that `EventTracer` provides for other loggers.
+
+*Notes*
+- Prometheus requires every metrics to be pre-registered before we can track them. In `EventTracer`, by default it will raise the error for any unregistered metrics. Alternative, we provides a `raise_if_missing` flag to allow just-in-time metric registration. 
+```ruby
+logger = EventTracer::Prometheus.new(
+    registry, 
+    allowed_tags: [], 
+    default_tags: {},
+    raise_if_missing: false # this will register the missing metric instead of raising error
+)
+```
+However, doing so defeats the purpose of being clear on what metrics we want to track and can also result in a performance penalty. 
+To make the metrics registration less tedious, we recommend you to standardize your custom metrics name. 
+
+- For multi-processes app, we need to choose the `DirectFileStore` for Prometheus's data store. Read on [Data store](https://github.com/prometheus/client_ruby#data-stores) for more information.
 
 ### Results
 
