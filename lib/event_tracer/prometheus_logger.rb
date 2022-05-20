@@ -85,15 +85,13 @@ module EventTracer
       end
 
       def build_metric_labels(args)
-        labels = allowed_tags.each_with_object({}) do |tag, object|
-          object[tag] = args[tag]
+        allowed_tags.inject(default_tags) do |metric_labels, tag|
+          metric_labels.merge(tag => args[tag])
         end
-
-        default_tags.merge(labels)
       end
 
       def labels_for_registration
-        allowed_tags + default_tags.keys
+        (allowed_tags + default_tags.keys).uniq
       end
   end
 end
