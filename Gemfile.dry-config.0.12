@@ -13,5 +13,4 @@ group :test do
   gem 'sidekiq'
   gem 'timecop'
   gem 'prometheus-client'
-  gem 'pry-byebug'
 end
