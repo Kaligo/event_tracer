@@ -102,6 +102,7 @@ describe EventTracer::PrometheusLogger do
   end
 
   context 'when raise_if_missing is true' do
+    let(:allowed_tags) { [:tenant_id, :app] }
     EventTracer::LOG_TYPES.each do |log_type|
       context "Log type: #{log_type}" do
         let(:expected_call) { log_type }
@@ -116,8 +117,43 @@ describe EventTracer::PrometheusLogger do
           }
         end
 
-        it 'raises the error' do
-          expect { subject.send(log_type, **params) }.to raise_error('Metric NewMetric not registered')
+        context 'when metric is not registered' do
+          it 'raises the error' do
+            expect { subject.send(log_type, **params) }.to raise_error('Metric NewMetric not registered')
+          end
+        end
+
+        context 'when metric is already registered' do
+          let(:expected_values_1) do
+            {
+              {
+                environment: 'development',
+                tenant_id: 'any_tenant',
+                app: 'vma'
+              } => 1.0
+            }
+          end
+
+          before do
+            prometheus.counter(:NewMetric, docstring: 'A counter for NewMetric', labels: [:tenant_id, :app, :environment])
+          end
+
+          after do
+            prometheus.unregister(:NewMetric)
+          end
+
+          it 'collects metric' do
+            result = subject.send(expected_call, **params)
+
+            expect(result.success?).to eq true
+            expect(result.error).to eq nil
+
+            metric = prometheus.get(:NewMetric)
+            expect(metric.name).to eq(:NewMetric)
+            expect(metric.type).to eq(:counter)
+            expect(metric.labels).to eq([:tenant_id, :app, :environment])
+            expect(metric.values).to eq(expected_values_1)
+          end
         end
       end
     end
