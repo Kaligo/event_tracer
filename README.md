@@ -252,47 +252,7 @@ logger = EventTracer::Prometheus.new(
 )
 ```
 However, doing so defeats the purpose of being clear on what metrics we want to track and can also result in a performance penalty. 
-To make the metrics registration less tedious, we recommend you to standardize your custom metrics name. We also provide a helper module to register metrics
-```ruby
-EventTracer::Helpers::PrometheusHelper.register_prometheus_metrics(
-    registry,
-    metric_type,
-    metric_name
-    labels # the list of your allowed_tags and default_tags
-)
-```
-
-Now you can auto-register metrics like this
-```ruby
-module EventTracking
-  def self.included(base)
-    EventTracer::Helpers::PrometheusHelper.register_prometheus_metrics(
-      registry,
-      :counter,
-      base.name,
-      [:allowed_tag_1, allowed_tag_2] # list of allowed_tags and default_tags
-    ) 
-  end
-end
-
-class Web::Controllers::Users::Update
-  include EventTracking # this will auto register a counter for metric `Web::Controllers::Users::Update`
-end
-```
-
-Note that for gauge metric, we can also specify the aggregation strategy for multi-proccesses app, by default it's `:max`
-
-```
-EventTracer::Helpers::PrometheusHelper.register_prometheus_metrics(
-  registry,
-  :gauge,
-  'web.controller.action',
-  labels, 
-  aggregation: :min
-)
-```
-
-Checkout [aggregation](https://github.com/prometheus/client_ruby#aggregation-settings-for-multi-process-stores) to read more about aggregation settings for gauge.
+To make the metrics registration less tedious, we recommend you to standardize your custom metrics name.
 
 ### Results
 
