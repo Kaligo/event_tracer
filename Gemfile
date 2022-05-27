@@ -10,4 +10,5 @@ group :test do
   gem 'nokogiri'
   gem 'sidekiq'
   gem 'timecop'
+  gem 'prometheus-client'
 end

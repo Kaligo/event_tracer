@@ -5,6 +5,7 @@ require 'data_helpers/mock_appsignal'
 require 'data_helpers/mock_datadog'
 require 'event_tracer/dynamo_db/logger'
 require 'dry/configurable/test_interface'
+require 'prometheus/client'
 
 EventTracer::Config.enable_test_interface
 
