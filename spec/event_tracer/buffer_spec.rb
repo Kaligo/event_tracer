@@ -49,6 +49,22 @@ describe EventTracer::Buffer do
         end
       end
     end
+
+    context 'when an instance is called in multiple threads' do
+      it 'works properly' do
+        buffer = described_class.new(buffer_size: 3, flush_interval: 3)
+
+        threads = 10.times.map do |i|
+          Thread.new {
+            10.times do
+              buffer.flush unless buffer.add(i)
+            end
+          }
+        end
+
+        threads.each(&:join)
+      end
+    end
   end
 
   describe '#flush' do
