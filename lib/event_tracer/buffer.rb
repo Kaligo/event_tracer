@@ -58,8 +58,15 @@ module EventTracer
       attr_reader :buffer_size, :flush_interval, :buffer
 
       def add_item?
-        buffer.size < buffer_size &&
-          (buffer.empty? || buffer.first[:created_at] > Time.now - flush_interval)
+        return false if buffer.size >= buffer_size
+
+        # NOTE: we cannot use buffer.empty? then buffer.first here
+        # due to race-condition when another thread flushes the buffer
+        # right after buffer.empty? but before buffer.first is called.
+        # If we have more complicated use case, we may need to start introducing
+        # mutext.
+        first_item = buffer.first
+        first_item.nil? || first_item[:created_at] > Time.now - flush_interval
       end
   end
 end
