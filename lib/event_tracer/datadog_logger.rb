@@ -1,4 +1,5 @@
-require_relative './basic_decorator'
+require_relative './metric_logger'
+
 # NOTES
 # Datadog interface to send our usual actions
 # BasicDecorator adds a transparent interface on top of the datadog interface
@@ -10,7 +11,7 @@ require_relative './basic_decorator'
 #        data_dog_logger.info metrics: { counter_1: { type: :counter, value: 1}, gauce_2: { type: :gauce, value: 10 } }
 
 module EventTracer
-  class DatadogLogger < BasicDecorator
+  class DatadogLogger < MetricLogger
 
     SUPPORTED_METRIC_TYPES = {
       counter: :count,
@@ -22,49 +23,19 @@ module EventTracer
     DEFAULT_METRIC_TYPE = :count
     DEFAULT_COUNTER = 1
 
-    attr_reader :allowed_tags
-
     def initialize(decoratee, allowed_tags: [], default_tags: {})
       super(decoratee)
       @allowed_tags = allowed_tags.freeze
       @default_tags = default_tags.freeze
     end
 
-    LOG_TYPES.each do |log_type|
-      define_method log_type do |**args|
-        metrics = args[:metrics]
-
-        return fail_result('Invalid Datadog config') unless valid_args?(metrics)
-        return success_result if metrics.empty?
-
-        tags = build_tags(args)
-
-        case metrics
-        when Array
-          metrics.each do |metric|
-            datadog.public_send(DEFAULT_METRIC_TYPE, metric, DEFAULT_COUNTER, tags: tags)
-          end
-        when Hash
-          metrics.each do |metric_name, metric_payload|
-            payload = metric_payload.transform_keys(&:to_sym)
-            metric_type = SUPPORTED_METRIC_TYPES[payload.fetch(:type).to_sym]
-            datadog.public_send(metric_type, metric_name, payload.fetch(:value), tags: tags) if metric_type
-          end
-        end
-
-        success_result
-      end
-    end
-
     private
 
-    alias_method :datadog, :decoratee
-
-    attr_reader :default_tags
-
-    def valid_args?(metrics)
-      metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
+    def send_metric(metric_type, metric_name, value, tags)
+      datadog.public_send(metric_type, metric_name, value, tags: tags)
     end
+
+    alias_method :datadog, :decoratee
 
     def build_tags(args)
       default_tags.merge(args.slice(*allowed_tags)).map do |tag, value|
