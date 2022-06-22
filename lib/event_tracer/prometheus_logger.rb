@@ -1,13 +1,14 @@
+require_relative './metric_logger'
+
 module EventTracer
-  class PrometheusLogger < BasicDecorator
+  class PrometheusLogger < MetricLogger
 
     SUPPORTED_METRIC_TYPES = {
       counter: :increment_count,
       gauge: :set_gauge
     }.freeze
-    DEFAULT_INCREMENT = 1
-
-    attr_reader :allowed_tags
+    DEFAULT_METRIC_TYPE = :increment_count
+    DEFAULT_COUNTER = 1
 
     def initialize(prometheus, allowed_tags: [], default_tags: {}, raise_if_missing: true)
       super(prometheus)
@@ -16,49 +17,15 @@ module EventTracer
       @raise_if_missing = raise_if_missing
     end
 
-    LOG_TYPES.each do |log_type|
-      define_method log_type do |**args|
-        metrics = args[:metrics]
-
-        return fail_result('Invalid metrics for Prometheus') unless valid_args?(metrics)
-        return success_result if metrics.empty?
-
-        labels = build_metric_labels(args)
-
-        case metrics
-        when Array
-          metrics.each do |metric_name|
-            increment_count(metric_name, DEFAULT_INCREMENT, labels: labels)
-          end
-        when Hash
-          metrics.each do |metric_name, metric_payload|
-            payload = metric_payload.transform_keys(&:to_sym)
-            metric_type = SUPPORTED_METRIC_TYPES[payload.fetch(:type).to_sym]
-
-            if metric_type
-              send(
-                metric_type,
-                metric_name,
-                payload.fetch(:value),
-                labels: labels
-              )
-            end
-          end
-        end
-
-        success_result
-      end
-    end
-
     private
+
+      def send_metric(metric_type, metric_name, value, labels)
+        send(metric_type, metric_name, value, labels: labels)
+      end
 
       alias_method :prometheus, :decoratee
 
-      attr_reader :default_tags, :raise_if_missing
-
-      def valid_args?(metrics)
-        metrics && (metrics.is_a?(Hash) || metrics.is_a?(Array))
-      end
+      attr_reader :raise_if_missing
 
       def increment_count(metric_name, value, labels:)
         metric = get_metric(metric_name.to_sym, :counter)
@@ -84,7 +51,7 @@ module EventTracer
         )
       end
 
-      def build_metric_labels(args)
+      def build_tags(args)
         allowed_tags.inject(default_tags) do |metric_labels, tag|
           metric_labels.merge(tag => args[tag])
         end
