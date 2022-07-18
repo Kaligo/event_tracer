@@ -28,6 +28,30 @@ describe EventTracer::BufferedLogger do
     it { is_expected.to be_success }
   end
 
+  context 'when payload is nil' do
+    let(:payload) { nil }
+
+    context 'when buffer is not full' do
+      before do
+        expect(buffer).to receive(:size).twice.and_return(0)
+      end
+
+      it 'does nothing' do
+        expect {
+          expect(subject).to be_success
+        }.not_to change { buffer.size }
+      end
+    end
+
+    context 'does nothing' do
+      it 'should not log' do
+        expect(worker).not_to receive(:perform_async)
+
+        subject
+      end
+    end
+  end
+
   context 'when buffer is full and there are no JSON error' do
     let(:all_payloads) { [other_payload, payload] }
     let(:other_payload) { { data: 'other' } }

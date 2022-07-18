@@ -23,7 +23,7 @@ module EventTracer
     def save_message(log_type, action:, message:, **args)
       payload = log_processor.call(log_type, action: action, message: message, args: args)
 
-      unless buffer.add(payload)
+      unless payload.nil? || buffer.add(payload)
         all_payloads = buffer.flush + [payload]
         execute_payload(all_payloads)
       end
