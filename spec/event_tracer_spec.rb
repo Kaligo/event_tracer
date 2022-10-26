@@ -98,8 +98,10 @@ describe EventTracer do
         end
 
         context 'when there is a configured error handler' do
+          let(:io) { StringIO.new }
+
           before do
-            EventTracer::Config.config.error_handler = ->(error, payload) { puts error, payload }
+            EventTracer::Config.config.error_handler = ->(error, payload) { io.puts error, payload }
           end
 
           after do
@@ -113,6 +115,8 @@ describe EventTracer do
 
             expect(result.records[:appsignal].success?).to eq true
             expect(result.records[:appsignal].error).to eq nil
+
+            expect(io.string).to include('Runtime error in base logger')
           end
         end
       end
