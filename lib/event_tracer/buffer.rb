@@ -43,7 +43,10 @@ module EventTracer
     def flush
       data = []
 
-      data << buffer.shift[:item] until buffer.empty?
+      # NOTE: We need to use this to avoid race-condition
+      buffer.cycle do
+        data << buffer.shift[:item]
+      end
 
       data
     end

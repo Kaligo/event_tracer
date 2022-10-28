@@ -68,15 +68,45 @@ describe EventTracer::Buffer do
   end
 
   describe '#flush' do
-    before do
-      buffer.add('item_1')
-      buffer.add('item_2')
+    context 'when there are items in buffer' do
+      before do
+        buffer.add('item_1')
+        buffer.add('item_2')
+      end
+
+      it 'clears all items in buffer' do
+        expect {
+          expect(buffer.flush).to eq ['item_1', 'item_2']
+        }.to change { buffer.size }.to(0)
+      end
     end
 
-    it 'clears all items in buffer' do
-      expect {
-        expect(buffer.flush).to eq ['item_1', 'item_2']
-      }.to change { buffer.size }.to(0)
+    context 'when there are no items in buffer' do
+      it 'does nothing' do
+        expect {
+          expect(buffer.flush).to eq []
+        }.not_to change { buffer.size }
+      end
+    end
+
+    context 'when an instance is called in multiple threads' do
+      let(:buffer_size) { 100 }
+      let(:data) { buffer_size.times.map { |i| "item_#{i}" } }
+
+      before do
+        data.each { |item| buffer.add(item) }
+      end
+
+      it 'works properly' do
+        threads = buffer_size.times.map do |i|
+          Thread.new { buffer.flush }
+        end
+
+        returned_data = threads.map(&:join).map(&:value).reduce(:+)
+
+        expect(buffer.size).to eq 0
+        expect(returned_data).to match_array(data)
+      end
     end
   end
 end
