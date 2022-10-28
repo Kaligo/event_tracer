@@ -91,9 +91,10 @@ describe EventTracer::Buffer do
 
     context 'when an instance is called in multiple threads' do
       let(:buffer_size) { 100 }
+      let(:data) { buffer_size.times.map { |i| "item_#{i}" } }
 
       before do
-        buffer_size.times { |i| buffer.add("item_#{i}") }
+        data.each { |item| buffer.add(item) }
       end
 
       it 'works properly' do
@@ -101,9 +102,10 @@ describe EventTracer::Buffer do
           Thread.new { buffer.flush }
         end
 
-        threads.each(&:join)
+        returned_data = threads.map(&:join).map(&:value).reduce(:+)
 
         expect(buffer.size).to eq 0
+        expect(returned_data).to match_array(data)
       end
     end
   end

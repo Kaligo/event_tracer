@@ -43,16 +43,9 @@ module EventTracer
     def flush
       data = []
 
-      while buffer.any?
-        item = buffer.shift
-
-        # NOTE: we still need to check this because there can be
-        # race condition, when in another thread `buffer.shift` is called
-        # right after `buffer.any?` and right before `buffer.shift` is called
-        # in this thread.
-        if item
-          data << item[:item]
-        end
+      # NOTE: We need to use this to avoid race-condition
+      buffer.cycle do
+        data << buffer.shift[:item]
       end
 
       data
