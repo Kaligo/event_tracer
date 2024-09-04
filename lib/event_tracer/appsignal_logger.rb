@@ -8,7 +8,7 @@ require_relative './metric_logger'
 #          EventTracer::AppsignalLogger.new(Appsignal, allowed_tags: ['tag_1', 'tag_2'])
 #
 #        appsignal_logger.info metrics: [:counter_1, :counter_2]
-#        appsignal_logger.info metrics: { counter_1: { type: :counter, value: 1 }, gauce_2: { type: :gauce, value: 10 } }
+#        appsignal_logger.info metrics: { counter_1: { type: :counter, value: 1 }, gauge_2: { type: :gauge, value: 10 } }
 module EventTracer
   class AppsignalLogger < MetricLogger
 
