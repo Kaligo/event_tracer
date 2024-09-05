@@ -37,7 +37,7 @@ module EventTracer
       filtered_payloads = filter_invalid_data(payloads)
 
       EventTracer.warn(
-        loggers: %i(base),
+        loggers: %i[base],
         action: self.class.name,
         app: EventTracer::Config.config.app_name,
         error: e.class.name,
@@ -46,12 +46,16 @@ module EventTracer
       )
 
       worker.perform_async(filtered_payloads) if filtered_payloads.any?
-    rescue StandardError => error
-      raise EventTracer::ErrorWithPayload.new(error, payloads)
+    rescue StandardError => e
+      raise EventTracer::ErrorWithPayload.new(e, payloads)
     end
 
     def filter_invalid_data(payloads)
-      payloads.select { |payload| payload.to_json rescue false }
+      payloads.select do |payload|
+        payload.to_json
+      rescue StandardError
+        false
+      end
     end
   end
 end
