@@ -108,7 +108,7 @@ EventTracer.info(
   message: 'There is an action',
   metrics: {
     metric_1: { type: :counter, value: 12 },
-    metric_2: { type: :gauce, value: 1 },
+    metric_2: { type: :gauge, value: 1 },
     metric_3: { type: :distribution, value: 10 }
   }
 )
@@ -131,7 +131,7 @@ Appsignal >= 2.5 is currently supported for the following metric functions:
 |------------------------|-----------------|
 | increment_counter      | counter         |
 | add_distribution_value | distribution    |
-| set_gauge              | gauce           |
+| set_gauge              | gauge           |
 
 We can also add [tags](https://docs.appsignal.com/metrics/custom.html#metric-tags) for metric:
 
@@ -232,7 +232,7 @@ registry = if Sidekiq.server?
            else
              Prometheus.registry
            end
-           
+
 logger = EventTracer::Prometheus.new(registry, allowed_tags: [], default_tags: {})
 EventTracer.register :prometheus, logger
 ```
@@ -242,16 +242,16 @@ Then you can track your metrics using the same interface that `EventTracer` prov
 *Notes*
 - For multi-processes app, we need to choose the `DirectFileStore` for Prometheus's data store. Read on [Data store](https://github.com/prometheus/client_ruby#data-stores) for more information.
 
-- Prometheus requires every metrics to be pre-registered before we can track them. In `EventTracer`, by default it will raise the error for any unregistered metrics. Alternative, we provide a `raise_if_missing` flag to allow just-in-time metric registration. 
+- Prometheus requires every metrics to be pre-registered before we can track them. In `EventTracer`, by default it will raise the error for any unregistered metrics. Alternative, we provide a `raise_if_missing` flag to allow just-in-time metric registration.
 ```ruby
 logger = EventTracer::Prometheus.new(
-    registry, 
-    allowed_tags: [], 
+    registry,
+    allowed_tags: [],
     default_tags: {},
     raise_if_missing: false # this will register the missing metric instead of raising error
 )
 ```
-However, doing so defeats the purpose of being clear on what metrics we want to track and can also result in a performance penalty. 
+However, doing so defeats the purpose of being clear on what metrics we want to track and can also result in a performance penalty.
 To make the metrics registration less tedious, we recommend you to standardize your custom metrics name.
 
 ### Results
@@ -306,7 +306,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/melvrickgoh/event_tracer.
+Bug reports and pull requests are welcome on GitHub at https://github.com/Kaligo/event_tracer.
 
 ## License
 

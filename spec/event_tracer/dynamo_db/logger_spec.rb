@@ -19,17 +19,16 @@ describe EventTracer::DynamoDB::Logger do
     let(:payload) do
       {
         message: 'Some message',
-        action: 'Testing',
-        log_type: :info
+        action: 'Testing'
       }
     end
     let(:expected_log_worker_payload) do
       [{
-        message: 'Some message',
-        action: 'Testing',
-        log_type: :info,
-        timestamp: '2020-02-09T12:34:56.000000Z',
-        app: EventTracer::Config.config.app_name
+        'message' => 'Some message',
+        'action' => 'Testing',
+        'log_type' => 'info',
+        'timestamp' => '2020-02-09T12:34:56.000000Z',
+        'app' => EventTracer::Config.config.app_name
       }]
     end
 
@@ -44,8 +43,7 @@ describe EventTracer::DynamoDB::Logger do
     let(:payload) do
       {
         message: "\xAE",
-        action: 'Testing',
-        log_type: :info
+        action: 'Testing'
       }
     end
     let(:expected_log_worker_payload) do
@@ -55,7 +53,13 @@ describe EventTracer::DynamoDB::Logger do
         error: 'JSON::GeneratorError',
         loggers: [:base],
         app: EventTracer::Config.config.app_name,
-        payload: [hash_including(payload)]
+        payload: [
+          hash_including(
+            'log_type' => 'info',
+            'action' => 'Testing',
+            'message' => "\xAE"
+          )
+        ]
       }
     end
 
