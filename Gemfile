@@ -5,7 +5,6 @@ gemspec
 
 group :test do
   gem 'aws-sdk-dynamodb'
-  gem 'debug'
   gem 'nokogiri'
   gem 'prometheus-client'
   gem 'sidekiq'
