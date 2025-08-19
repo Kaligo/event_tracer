@@ -16,6 +16,29 @@ module EventTracer
       end
     end
 
+    # Flushes all remaining payloads in the buffer immediately.
+    # Intended to be called during shutdown to avoid losing buffered messages.
+    def flush
+      payloads = buffer.flush
+
+      return LogResult.new(true) if payloads.nil? || payloads.empty?
+
+      execute_payload(payloads)
+
+      LogResult.new(true)
+    rescue EventTracer::ErrorWithPayload => e
+      EventTracer.warn(
+        loggers: %i[base],
+        action: self.class.name,
+        app: EventTracer::Config.config.app_name,
+        error: e.class.name,
+        message: e.message,
+        payload: e.payload
+      )
+
+      LogResult.new(false, e)
+    end
+
     private
 
     attr_reader :buffer, :log_processor, :worker
