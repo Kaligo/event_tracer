@@ -25,6 +25,14 @@ module EventTracer
     end
   end
 
+  def self.flush_all
+    @loggers.map do |_code, logger|
+      next unless logger.is_a?(EventTracer::BufferedLogger)
+
+      logger.flush
+    end
+  end
+
   private
 
     def self.send_log_messages(log_type, loggers, args)

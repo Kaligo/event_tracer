@@ -220,6 +220,29 @@ If you prefer not to use the buffer, simply initialize without an argument:
 EventTracer.register :dynamodb, EventTracer::DynamoDBLogger.new
 ```
 
+You can also manually flush any remaining payloads from a buffered logger (e.g. during shutdown) using the new API:
+
+```ruby
+EventTracer.find(:dynamo_db).flush
+```
+This will synchronously drain the buffer and enqueue any remaining payloads to the worker. Invalid JSON payloads are filtered and a warning is emitted with payload context.
+
+To flush all registered loggers that support flushing at once, use the top-level helper:
+
+```ruby
+# In puma initializer
+
+on_worker_shutdown do
+  EventTracer.flush_all
+end
+
+# In Sidekiq initializer
+
+config.on(:shutdown) do
+  EventTracer.flush_all
+end
+```
+
 ### Prometheus integration
 
 - For Ruby app, Prometheus is supported by [Prometheus Client](https://github.com/prometheus/client_ruby). Checkout its [Rack middleware](https://github.com/prometheus/client_ruby#rack-middleware) to setup `/metrics` endpoint.

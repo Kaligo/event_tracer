@@ -122,4 +122,50 @@ describe EventTracer do
       end
     end
   end
+
+  describe '.flush_all' do
+    around do |example|
+      original_loggers = EventTracer.send(:instance_variable_get, :@loggers).dup
+      EventTracer.send(:instance_variable_set, :@loggers, {})
+      example.run
+      EventTracer.send(:instance_variable_set, :@loggers, original_loggers)
+    end
+
+    context 'when no buffered loggers are registered' do
+      before do
+        EventTracer.register :base, EventTracer::BaseLogger.new(MockLogger.new)
+      end
+
+      it 'returns an array with only nils (no buffered loggers)' do
+        results = EventTracer.flush_all
+        expect(results).to be_a(Array)
+        expect(results.compact).to be_empty
+      end
+    end
+
+    context 'when buffered and non-buffered loggers are registered' do
+      let(:buffered_logger) do
+        EventTracer::BufferedLogger.new(
+          buffer: double('Buffer'),
+          log_processor: double('LogProcessor'),
+          worker: double('Worker')
+        )
+      end
+
+      let(:log_result) { EventTracer::LogResult.new(true) }
+
+      before do
+        EventTracer.register :base, EventTracer::BaseLogger.new(MockLogger.new)
+        EventTracer.register :buffered, buffered_logger
+        allow(buffered_logger).to receive(:flush).and_return(log_result)
+      end
+
+      it 'flushes only buffered loggers and returns their results' do
+        results = EventTracer.flush_all
+
+        expect(buffered_logger).to have_received(:flush).once
+        expect(results.compact).to eq([log_result])
+      end
+    end
+  end
 end

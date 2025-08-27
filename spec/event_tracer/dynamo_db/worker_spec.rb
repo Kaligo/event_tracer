@@ -22,7 +22,7 @@ describe EventTracer::DynamoDB::Worker do
   subject { described_class.new(aws_dynamo_client) }
 
   context 'when input is a single item' do
-    let(:batch_write_item) { true }
+    let(:batch_write_item) { { unprocessed_items: {} } }
 
     it 'runs and puts details to dynamo db' do
       subject.perform(details)
@@ -30,7 +30,7 @@ describe EventTracer::DynamoDB::Worker do
   end
 
   context 'when input is an array' do
-    let(:batch_write_item) { true }
+    let(:batch_write_item) { { unprocessed_items: {} } }
     let(:details) { [{ 'action' => 'Test', 'message' => 'TestWorker' }] }
 
     it 'runs and puts details to dynamo db' do
@@ -67,7 +67,7 @@ describe EventTracer::DynamoDB::Worker do
         }
       }
     } }
-    let(:batch_write_item) { true }
+    let(:batch_write_item) { { unprocessed_items: {} } }
 
     it 'does not log item attributes with nil values' do
       expect(aws_dynamo_client).to receive(:batch_write_item).with(
