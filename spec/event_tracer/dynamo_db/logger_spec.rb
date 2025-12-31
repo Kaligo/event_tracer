@@ -26,6 +26,7 @@ describe EventTracer::DynamoDB::Logger do
       [{
         'message' => 'Some message',
         'action' => 'Testing',
+        'action_timestamp' => 'Testing#2020-02-09T12:34:56.000000Z',
         'log_type' => 'info',
         'timestamp' => '2020-02-09T12:34:56.000000Z',
         'app' => EventTracer::Config.config.app_name
